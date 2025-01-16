@@ -13,17 +13,16 @@ class PresenceScreen extends StatefulWidget {
 }
 
 class _PresenceScreenState extends State<PresenceScreen> {
-  String _presensi = 'Hadir';
+  String? _presensi; // Ubah menjadi nullable
   TextEditingController _dateController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   XFile? _imageFile;
   String? _fileName;
   Position? _currentPosition;
   bool _isLoadingLocation = true;
-  final LatLng smkn4Location =
-      LatLng(-7.989810169827179, 112.62725994080097); // Koordinat SMKN 4 Malang
+  final LatLng smkn4Location = LatLng(-8.05905443503718, 112.65058997997427);
   bool isWithinSchoolArea = false;
-  final double radiusInMeters = 500; 
+  final double radiusInMeters = 100;
   final double visualRadius = 50;
 
   @override
@@ -63,7 +62,9 @@ class _PresenceScreenState extends State<PresenceScreen> {
         _currentPosition = position;
         _isLoadingLocation = false;
       });
-      _checkIfWithinSchool();
+      if (_presensi == 'Hadir') {
+        _checkIfWithinSchool();
+      }
     } catch (e) {
       print("Error getting location: $e");
       setState(() {
@@ -96,6 +97,17 @@ class _PresenceScreenState extends State<PresenceScreen> {
       );
 
       if (pickedFile != null) {
+        String extension = pickedFile.path.split('.').last.toLowerCase();
+        if (!['jpg', 'jpeg', 'png'].contains(extension)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Format file harus JPG, JPEG, atau PNG'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
         setState(() {
           _imageFile = pickedFile;
           _fileName = pickedFile.name;
@@ -103,6 +115,12 @@ class _PresenceScreenState extends State<PresenceScreen> {
       }
     } catch (e) {
       print('Error memilih gambar: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memilih gambar'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -112,8 +130,7 @@ class _PresenceScreenState extends State<PresenceScreen> {
       backgroundColor: Color.fromRGBO(242, 242, 242, 1),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
-        child: Padding(
-          padding: const EdgeInsets.only(top: 20.0),
+        child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -140,6 +157,8 @@ class _PresenceScreenState extends State<PresenceScreen> {
                 ),
               ),
               SizedBox(height: 30),
+
+//Card Welcome
               Card(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -175,18 +194,19 @@ class _PresenceScreenState extends State<PresenceScreen> {
                 ),
               ),
               SizedBox(height: 20),
+
+//Card Input
               Card(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 color: const Color.fromRGBO(255, 255, 255, 1),
-                child: Container(
-                  height: _imageFile != null ? 800 : 700,
-                  padding: const EdgeInsets.fromLTRB(16.0, 30.0, 16.0, 0.0),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 30.0, 16.0, 30.0),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Tambahkan text pemberitahuan di sini
                       if (_presensi == 'Hadir' &&
                           !_isLoadingLocation &&
                           _currentPosition != null)
@@ -200,8 +220,8 @@ class _PresenceScreenState extends State<PresenceScreen> {
                           ),
                           child: Text(
                             isWithinSchoolArea
-                                ? 'Anda berada dalam area sekolah'
-                                : 'Anda berada di luar area sekolah',
+                                ? 'Anda berada dalam area sekolah, silahkan mengisi data absensi dengan benar'
+                                : 'Anda berada di luar area sekolah, harap menuju area sekolah untuk melakukan absensi',
                             style: GoogleFonts.plusJakartaSans(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -218,7 +238,6 @@ class _PresenceScreenState extends State<PresenceScreen> {
                         ),
                       ),
                       SizedBox(height: 8),
-
                       Container(
                         height: 200,
                         decoration: BoxDecoration(
@@ -270,7 +289,6 @@ class _PresenceScreenState extends State<PresenceScreen> {
                                             ),
                                             MarkerLayer(
                                               markers: [
-                                                // Marker untuk SMKN 4 Malang dengan radius
                                                 Marker(
                                                   point: smkn4Location,
                                                   child: _presensi == 'Hadir'
@@ -322,7 +340,6 @@ class _PresenceScreenState extends State<PresenceScreen> {
                                                           size: 40,
                                                         ),
                                                 ),
-                                                // Marker untuk lokasi user tanpa radius
                                                 Marker(
                                                   point: LatLng(
                                                     _currentPosition!.latitude,
@@ -344,7 +361,9 @@ class _PresenceScreenState extends State<PresenceScreen> {
                                           child: FloatingActionButton.small(
                                             onPressed: () {
                                               _getCurrentLocation();
-                                              _checkIfWithinSchool();
+                                              if (_presensi == 'Hadir') {
+                                                _checkIfWithinSchool();
+                                              }
                                             },
                                             backgroundColor: Colors.white,
                                             child: Icon(
@@ -359,64 +378,173 @@ class _PresenceScreenState extends State<PresenceScreen> {
                         ),
                       ),
                       SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Text(
-                            'Pilih Presensi',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[700],
-                            ),
-                          ),
-                          Text(
-                            ' *',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.red,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8),
+
+//Input Presensi
                       DropdownButtonFormField<String>(
                         value: _presensi,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                        hint: Text(
+                          'Pilih Presensi',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight:
+                                FontWeight.w500, // Mengatur ketebalan text
                           ),
+                        ),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Color.fromRGBO(241, 244, 255, 1),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 16),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                             borderSide: BorderSide(
                                 color: Color.fromRGBO(31, 80, 154, 1),
                                 width: 2),
                           ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide:
+                                BorderSide(color: Colors.transparent, width: 2),
+                          ),
                         ),
                         items: [
                           DropdownMenuItem(
-                            value: 'Hadir',
-                            child: Text('Hadir'),
-                          ),
+                              value: 'Hadir', child: Text('Hadir')),
                           DropdownMenuItem(
-                            value: 'Sakit',
-                            child: Text('Sakit'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Izin',
-                            child: Text('Izin'),
-                          ),
+                              value: 'Sakit', child: Text('Sakit')),
+                          DropdownMenuItem(value: 'Izin', child: Text('Izin')),
                         ],
                         onChanged: (value) {
                           setState(() {
-                            _presensi = value!;
+                            _presensi = value;
                             if (value == 'Hadir') {
                               _checkIfWithinSchool();
                             }
                           });
                         },
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Pilih status presensi';
+                          }
+                          return null;
+                        },
                       ),
-                      // ... sisa kode form yang tidak berubah ...
+                      SizedBox(height: 20),
+
+//Input Gambar
+                      TextFormField(
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          labelText: 'Masukkan Foto Surat',
+                          filled: true,
+                          fillColor: Color.fromRGBO(241, 244, 255, 1),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 16),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: BorderSide(
+                                color: Color.fromRGBO(31, 80, 154, 1),
+                                width: 2),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide:
+                                BorderSide(color: Colors.transparent, width: 2),
+                          ),
+                          suffixIcon: ElevatedButton(
+                            onPressed: _chooseFile,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color.fromRGBO(31, 80, 154, 1),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: Text(
+                              'Pilih File',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (_fileName != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            _fileName!,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                      if (_imageFile != null) ...[
+                        SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            File(_imageFile!.path),
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ],
+                      SizedBox(height: 20),
+
+//Input Tanggal
+                      TextFormField(
+                        controller: _dateController,
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          labelText: 'Masukkan Tanggal',
+                          filled: true,
+                          fillColor: Color.fromRGBO(241, 244, 255, 1),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 16),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: BorderSide(
+                                color: Color.fromRGBO(31, 80, 154, 1),
+                                width: 2),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide:
+                                BorderSide(color: Colors.transparent, width: 2),
+                          ),
+                          suffixIcon: Icon(Icons.calendar_today),
+                        ),
+                        onTap: () => _selectDate(context),
+                      ),
+                      SizedBox(height: 35),
+
+//Button Kirim
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Logika kirim
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            backgroundColor:
+                                const Color.fromRGBO(31, 80, 154, 1),
+                          ),
+                          child: Text(
+                            'Kirim',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 20,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
