@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:student_absence/widgets/bottom_nav_bar.dart';
+import 'package:student_absence/widgets/BottomNavbar/bottom_nav_bar.dart';
 
 class ProfileScreen extends StatelessWidget {
   @override

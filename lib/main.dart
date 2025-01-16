@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:student_absence/screens/splash_screen.dart'; 
+import 'package:student_absence/views/splash_screen.dart'; 
 
 void main() {
   runApp(Main());

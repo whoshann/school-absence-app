@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:student_absence/screens/home_screen.dart'; 
+import 'package:student_absence/views/home_screen.dart'; 
 import 'package:google_fonts/google_fonts.dart'; 
 
 class LoginScreen extends StatefulWidget {

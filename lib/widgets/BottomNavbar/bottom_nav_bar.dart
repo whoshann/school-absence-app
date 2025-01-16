@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:student_absence/screens/home_screen.dart';
-import 'package:student_absence/screens/presence_screen.dart';
-import 'package:student_absence/screens/history_screen.dart';
-import 'package:student_absence/screens/profile_screen.dart';
+import 'package:student_absence/views/home_screen.dart';
+import 'package:student_absence/views/presence_screen.dart';
+import 'package:student_absence/views/history_screen.dart';
+import 'package:student_absence/views/profile_screen.dart';
 
 class CustomNavigationBar extends StatelessWidget {
   final int currentIndex; // Indeks menu aktif
