@@ -1,91 +1,322 @@
 import 'package:flutter/material.dart';
 import 'package:student_absence/widgets/BottomNavbar/bottom_nav_bar.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:table_calendar/table_calendar.dart';
 
-class HistoryScreen extends StatelessWidget {
+class HistoryScreen extends StatefulWidget {
+  @override
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<HistoryScreen> {
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+
+  // Data dummy untuk status presensi
+  final Map<String, String> _presenceStatus = {
+    // Format key: 'yyyy-mm-dd'
+    '${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}':
+        'hadir', // Hari ini
+    '2025-1-16': 'hadir',
+    '2025-1-17': 'hadir',
+    '2025-1-18': 'hadir',
+    '2025-1-19': 'izin',
+    '2025-1-20': 'alpha',
+    '2025-1-21': 'sakit',
+  };
+
+  // Warna untuk setiap status
+  final Map<String, Color> _statusColors = {
+    'hadir': Colors.green,
+    'sakit': Colors.blue,
+    'izin': Colors.orange,
+    'alpha': Colors.red,
+  };
+
+  DateTime get _firstDay => DateTime.now().subtract(Duration(days: 365));
+  DateTime get _lastDay => DateTime.now().add(Duration(days: 365));
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          Color.fromRGBO(242, 242, 242, 1), // Background utama aplikasi
+      backgroundColor: Color.fromRGBO(242, 242, 242, 1),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(23, 40, 16, 8),
-              child: Text(
-                'Absensi',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  color: Color.fromRGBO(157, 157, 157, 1),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(23, 0, 16, 8),
-              child: Text(
-                'Halo Adji Ardiansyah',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromRGBO(70, 66, 85, 1),
-                ),
-              ),
-            ),
-            SizedBox(height: 30),
-
-            // Konten Card (Full Width)
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Color.fromRGBO(31, 80, 154, 1),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(50),
-                    topRight: Radius.circular(50),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(23, 40, 16, 8),
+                child: Text(
+                  'Absensi',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    color: Color.fromRGBO(157, 157, 157, 1),
                   ),
                 ),
-                padding: const EdgeInsets.fromLTRB(20, 40, 20, 40),
-                child: ListView.builder(
-                  itemCount: 10, // Jumlah item dalam daftar
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 30, top: 10),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: ListTile(
-                          leading: Icon(
-                            Icons.check_circle,
-                            color: Colors.teal,
-                          ),
-                          title: Text(
-                            'Hadir',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          trailing: Text(
-                            '24/01/2024',
-                            style: GoogleFonts.plusJakartaSans(
-                              color: Colors.grey,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(23, 0, 16, 8),
+                child: Text(
+                  'Halo Adji Ardiansyah',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromRGBO(70, 66, 85, 1),
+                  ),
                 ),
               ),
-            ),
-          ],
+              SizedBox(height: 30),
+
+              // Calendar
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                margin: EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.all(15),
+                child: TableCalendar(
+                  firstDay: _firstDay,
+                  lastDay: _lastDay,
+                  focusedDay: _focusedDay,
+                  calendarFormat: _calendarFormat,
+                  selectedDayPredicate: (day) {
+                    return isSameDay(_selectedDay, day);
+                  },
+                  onDaySelected: (selectedDay, focusedDay) {
+                    setState(() {
+                      _selectedDay = selectedDay;
+                      _focusedDay = focusedDay;
+                    });
+                  },
+                  onFormatChanged: (format) {
+                    setState(() {
+                      _calendarFormat = format;
+                    });
+                  },
+                  onPageChanged: (focusedDay) {
+                    setState(() {
+                      _focusedDay = focusedDay;
+                    });
+                  },
+                  calendarStyle: CalendarStyle(
+                    markersMaxCount: 1,
+                    defaultTextStyle: GoogleFonts.plusJakartaSans(
+                      color: Colors.black,
+                    ),
+                    weekendTextStyle: GoogleFonts.plusJakartaSans(
+                      color: Colors.red,
+                    ),
+                    selectedTextStyle: GoogleFonts.plusJakartaSans(
+                      color: Colors.white,
+                    ),
+                    todayTextStyle: GoogleFonts.plusJakartaSans(
+                      color: Colors.white,
+                    ),
+                    outsideTextStyle: GoogleFonts.plusJakartaSans(
+                      color: Colors.grey,
+                    ),
+                    todayDecoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.transparent,
+                    ),
+                    selectedDecoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.transparent,
+                    ),
+                  ),
+                  calendarBuilders: CalendarBuilders(
+                    defaultBuilder: (context, day, focusedDay) {
+                      String dateKey = '${day.year}-${day.month}-${day.day}';
+                      String? status = _presenceStatus[dateKey];
+
+                      return Container(
+                        margin: const EdgeInsets.all(4.0),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: status != null
+                              ? _statusColors[status]
+                              : Colors.transparent,
+                        ),
+                        child: Text(
+                          '${day.day}',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: status != null ? Colors.white : Colors.black,
+                            fontSize: 14,
+                          ),
+                        ),
+                      );
+                    },
+                    todayBuilder: (context, day, focusedDay) {
+                      String dateKey = '${day.year}-${day.month}-${day.day}';
+                      String? status = _presenceStatus[dateKey];
+
+                      return Container(
+                        margin: const EdgeInsets.all(4.0),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: status != null
+                              ? _statusColors[status]
+                              : Colors.blue.withOpacity(0.3),
+                        ),
+                        child: Text(
+                          '${day.day}',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
+                      );
+                    },
+                    outsideBuilder: (context, day, focusedDay) {
+                      return Container(
+                        margin: const EdgeInsets.all(4.0),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '${day.day}',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                        ),
+                      );
+                    },
+                    selectedBuilder: (context, day, focusedDay) {
+                      String dateKey = '${day.year}-${day.month}-${day.day}';
+                      String? status = _presenceStatus[dateKey];
+
+                      return Container(
+                        margin: const EdgeInsets.all(4.0),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: status != null
+                              ? _statusColors[status]
+                              : Colors.blue.withOpacity(0.3),
+                        ),
+                        child: Text(
+                          '${day.day}',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  headerStyle: HeaderStyle(
+                    formatButtonVisible: false,
+                    titleCentered: true,
+                    titleTextStyle: GoogleFonts.plusJakartaSans(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromRGBO(70, 66, 85, 1),
+                    ),
+                    leftChevronIcon: Icon(
+                      Icons.chevron_left,
+                      color: Color.fromRGBO(70, 66, 85, 1),
+                    ),
+                    rightChevronIcon: Icon(
+                      Icons.chevron_right,
+                      color: Color.fromRGBO(70, 66, 85, 1),
+                    ),
+                  ),
+                  daysOfWeekStyle: DaysOfWeekStyle(
+                    weekdayStyle: GoogleFonts.plusJakartaSans(
+                      color: Color.fromRGBO(70, 66, 85, 1),
+                      fontWeight: FontWeight.bold,
+                    ),
+                    weekendStyle: GoogleFonts.plusJakartaSans(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Status Legend
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Container(
+                  padding: EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 2,
+                        blurRadius: 5,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Keterangan Status',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color.fromRGBO(70, 66, 85, 1),
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatusLegend('Hadir', Colors.green),
+                          _buildStatusLegend('Sakit', Colors.blue),
+                          _buildStatusLegend('Izin', Colors.orange),
+                          _buildStatusLegend('Alpha', Colors.red),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: CustomNavigationBar(currentIndex: 2),
+    );
+  }
+
+  Widget _buildStatusLegend(String label, Color color) {
+    return Column(
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(5),
+          ),
+        ),
+        SizedBox(height: 5),
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            color: Color.fromRGBO(70, 66, 85, 1),
+          ),
+        ),
+      ],
     );
   }
 }

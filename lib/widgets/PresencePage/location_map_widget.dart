@@ -41,8 +41,8 @@ class LocationMapWidget extends StatelessWidget {
             ),
             child: Text(
               isWithinSchoolArea
-                  ? 'Anda berada dalam area sekolah'
-                  : 'Anda berada di luar area sekolah',
+                  ? 'Anda berada dalam area sekolah, silahkan mengisi data absensi dengan benar'
+                  : 'Anda berada di luar area sekolah, harap menuju area sekolah untuk melakukan absensi',
               style: GoogleFonts.plusJakartaSans(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,

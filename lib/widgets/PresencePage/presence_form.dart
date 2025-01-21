@@ -113,7 +113,7 @@ class PresenceForm extends StatelessWidget {
               ),
             ),
             helperText: presensi == 'Hadir'
-                ? 'Upload file tidak diperlukan untuk status Hadir'
+                ? 'Tidak perlu upload gambar jika hadir'
                 : 'Upload file surat izin/sakit',
             helperStyle: GoogleFonts.plusJakartaSans(
               color: presensi == 'Hadir' ? Colors.grey : Colors.grey[600],

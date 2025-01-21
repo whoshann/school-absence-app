@@ -7,7 +7,7 @@ import 'package:student_absence/widgets/PresencePage/presence_header.dart';
 import 'package:student_absence/widgets/PresencePage/welcome_card.dart';
 import 'package:student_absence/widgets/BottomNavbar/bottom_nav_bar.dart';
 import 'package:student_absence/services/location_services.dart';
-import 'package:student_absence/constans/presence_constant.dart';
+import 'package:student_absence/constans/presence_coordinat_constant.dart';
 
 
 class PresenceScreen extends StatefulWidget {
@@ -84,7 +84,7 @@ class _PresenceScreenState extends State<PresenceScreen> {
     if (_presensi == 'Hadir') {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Upload file tidak diperlukan untuk status Hadir'),
+          content: Text('Tidak perlu upload gambar jika hadir'),
           backgroundColor: Colors.grey,
         ),
       );
