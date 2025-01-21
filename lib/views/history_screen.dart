@@ -28,10 +28,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   // Warna untuk setiap status
   final Map<String, Color> _statusColors = {
-    'hadir': Colors.green,
-    'sakit': Colors.blue,
-    'izin': Colors.orange,
-    'alpha': Colors.red,
+    'hadir': Color.fromRGBO(31, 80, 154, 1),
+    'sakit': Color.fromRGBO(229, 127, 5, 1),
+    'izin': Color.fromRGBO(10, 151, 176, 1),
+    'alpha': Color.fromRGBO(223, 5, 5, 1),
   };
 
   DateTime get _firstDay => DateTime.now().subtract(Duration(days: 365));
@@ -279,10 +279,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatusLegend('Hadir', Colors.green),
-                          _buildStatusLegend('Sakit', Colors.blue),
-                          _buildStatusLegend('Izin', Colors.orange),
-                          _buildStatusLegend('Alpha', Colors.red),
+                          _buildStatusLegend('Hadir', Color.fromRGBO(31, 80, 154, 1)),
+                          _buildStatusLegend('Sakit', Color.fromRGBO(229, 127, 5, 1)),
+                          _buildStatusLegend('Izin', Color.fromRGBO(10, 151, 176, 1)),
+                          _buildStatusLegend('Alpha', Color.fromRGBO(223, 5, 5, 1)),
                         ],
                       ),
                     ],
