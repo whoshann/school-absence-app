@@ -11,6 +11,7 @@ class PresenceForm extends StatelessWidget {
   final VoidCallback onChooseFile;
   final TextEditingController dateController;
   final Function(BuildContext) onSelectDate;
+  final VoidCallback onSubmit;
 
   const PresenceForm({
     Key? key,
@@ -21,7 +22,33 @@ class PresenceForm extends StatelessWidget {
     required this.onChooseFile,
     required this.dateController,
     required this.onSelectDate,
+    required this.onSubmit,
   }) : super(key: key);
+
+  List<DropdownMenuItem<String>> _buildStatusItems() {
+    final now = DateTime.now();
+    final cutoffTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      07,
+      15,
+    ); // 07:15
+
+    if (now.isAfter(cutoffTime)) {
+      return [
+        DropdownMenuItem(value: 'Late', child: Text('Terlambat')),
+        DropdownMenuItem(value: 'Permission', child: Text('Izin')),
+        DropdownMenuItem(value: 'Sick', child: Text('Sakit')),
+      ];
+    }
+
+    return [
+      DropdownMenuItem(value: 'Present', child: Text('Hadir')),
+      DropdownMenuItem(value: 'Permission', child: Text('Izin')),
+      DropdownMenuItem(value: 'Sick', child: Text('Sakit')),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,18 +74,15 @@ class PresenceForm extends StatelessWidget {
             contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
-              borderSide: BorderSide(color: Color.fromRGBO(31, 80, 154, 1), width: 2),
+              borderSide:
+                  BorderSide(color: Color.fromRGBO(31, 80, 154, 1), width: 2),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
               borderSide: BorderSide(color: Colors.transparent, width: 2),
             ),
           ),
-          items: [
-            DropdownMenuItem(value: 'Hadir', child: Text('Hadir')),
-            DropdownMenuItem(value: 'Sakit', child: Text('Sakit')),
-            DropdownMenuItem(value: 'Izin', child: Text('Izin')),
-          ],
+          items: _buildStatusItems(),
           onChanged: onPresensiChanged,
           validator: (value) {
             if (value == null) return 'Pilih status presensi';
@@ -77,7 +101,7 @@ class PresenceForm extends StatelessWidget {
               color: Colors.grey[700],
             ),
             filled: true,
-            fillColor: presensi == 'Hadir'
+            fillColor: presensi == 'Present'
                 ? Colors.grey[200]
                 : Color.fromRGBO(241, 244, 255, 1),
             border: InputBorder.none,
@@ -85,7 +109,7 @@ class PresenceForm extends StatelessWidget {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
               borderSide: BorderSide(
-                color: presensi == 'Hadir'
+                color: presensi == 'Present'
                     ? Colors.grey
                     : Color.fromRGBO(31, 80, 154, 1),
                 width: 2,
@@ -96,9 +120,9 @@ class PresenceForm extends StatelessWidget {
               borderSide: BorderSide(color: Colors.transparent, width: 2),
             ),
             suffixIcon: ElevatedButton(
-              onPressed: presensi == 'Hadir' ? null : onChooseFile,
+              onPressed: presensi == 'Present' ? null : onChooseFile,
               style: ElevatedButton.styleFrom(
-                backgroundColor: presensi == 'Hadir'
+                backgroundColor: presensi == 'Present'
                     ? Colors.grey
                     : Color.fromRGBO(31, 80, 154, 1),
                 shape: RoundedRectangleBorder(
@@ -112,11 +136,11 @@ class PresenceForm extends StatelessWidget {
                 ),
               ),
             ),
-            helperText: presensi == 'Hadir'
+            helperText: presensi == 'Present'
                 ? 'Tidak perlu upload gambar jika hadir'
                 : 'Upload file surat izin/sakit',
             helperStyle: GoogleFonts.plusJakartaSans(
-              color: presensi == 'Hadir' ? Colors.grey : Colors.grey[600],
+              color: presensi == 'Present' ? Colors.grey : Colors.grey[600],
               fontSize: 12,
             ),
           ),
@@ -161,7 +185,8 @@ class PresenceForm extends StatelessWidget {
             contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
-              borderSide: BorderSide(color: Color.fromRGBO(31, 80, 154, 1), width: 2),
+              borderSide:
+                  BorderSide(color: Color.fromRGBO(31, 80, 154, 1), width: 2),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
@@ -177,9 +202,7 @@ class PresenceForm extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
-              // Implementasi logika pengiriman
-            },
+            onPressed: onSubmit,
             style: ElevatedButton.styleFrom(
               padding: EdgeInsets.symmetric(vertical: 15),
               shape: RoundedRectangleBorder(
