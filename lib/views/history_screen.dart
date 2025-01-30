@@ -30,6 +30,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     'sakit': Color.fromRGBO(229, 127, 5, 1),
     'izin': Color.fromRGBO(10, 151, 176, 1),
     'alpha': Color.fromRGBO(223, 5, 5, 1),
+    'terlambat': Color.fromRGBO(12, 241, 39, 1)
   };
 
   @override
@@ -42,17 +43,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
     try {
       setState(() => isLoading = true);
 
-      // Load student data
-      final currentStudent = await _studentService.getCurrentStudent();
-
-      // Load absences for current month
+      final student = await _studentService.getCurrentStudent();
       final absences = await _absenceService.getMonthlyAbsences(
-        currentStudent.id,
+        student.id,
         _focusedDay,
       );
 
       setState(() {
-        student = currentStudent;
+        this.student = student;
         _presenceStatus = absences;
         isLoading = false;
       });
@@ -338,6 +336,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     'Izin', Color.fromRGBO(10, 151, 176, 1)),
                                 _buildStatusLegend(
                                     'Alpha', Color.fromRGBO(223, 5, 5, 1)),
+                                _buildStatusLegend(
+                                    'Terlambat', Color.fromRGBO(12, 241, 39, 1)),
                               ],
                             ),
                           ],

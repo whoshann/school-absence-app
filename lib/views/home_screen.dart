@@ -19,8 +19,21 @@ class _HomeScreenState extends State<HomeScreen> {
   final StudentService _studentService = StudentService();
   final AbsenceService _absenceService = AbsenceService();
   final logger = Logger();
-  Student? student;
-  bool isLoading = true;
+  String selectedMonth = 'Januari';
+  Map<String, int> monthNumbers = {
+    'Januari': 1,
+    'Februari': 2,
+    'Maret': 3,
+    'April': 4,
+    'Mei': 5,
+    'Juni': 6,
+    'Juli': 7,
+    'Agustus': 8,
+    'September': 9,
+    'Oktober': 10,
+    'November': 11,
+    'Desember': 12,
+  };
 
   @override
   void initState() {
@@ -28,24 +41,18 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadData();
   }
 
-  Future<void> _loadData() async {
-    try {
-      setState(() => isLoading = true);
-      final data = await _loadStudentAndStatistics();
-      setState(() {
-        student = data['student'];
-        isLoading = false;
-      });
-    } catch (e) {
-      logger.e('Error loading data: $e');
-      setState(() => isLoading = false);
-    }
-  }
-
-  Future<Map<String, dynamic>> _loadStudentAndStatistics() async {
+  Future<Map<String, dynamic>> _loadData() async {
     try {
       final student = await _studentService.getCurrentStudent();
-      final statistics = await _absenceService.getAbsenceStatistics(student.id);
+      final currentYear = DateTime.now().year;
+      final selectedMonthNumber = monthNumbers[selectedMonth] ?? 1;
+
+      // Menggunakan method getStatistics yang baru
+      final statistics = await _absenceService.getStatistics(
+        student.id,
+        year: currentYear,
+        month: selectedMonthNumber,
+      );
 
       return {
         'student': student,
@@ -62,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Color.fromRGBO(242, 242, 242, 1),
       body: FutureBuilder<Map<String, dynamic>>(
-        future: _loadStudentAndStatistics(),
+        future: _loadData(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -131,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                student?.name ?? 'Loading...',
+                                snapshot.data!['student']?.name ?? 'Loading...',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -140,7 +147,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               SizedBox(height: 4.0),
                               Text(
-                                student?.classInfo.name ?? 'Loading...',
+                                snapshot.data!['student']?.classInfo.name ??
+                                    'Loading...',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
@@ -176,27 +184,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color:
-                                Colors.grey[300]!, // Border warna abu-abu muda
+                            color: Colors.grey[300]!,
                           ),
                         ),
                         child: DropdownButton<String>(
-                          value: 'Januari',
+                          value: selectedMonth,
                           dropdownColor: Colors.white,
-                          items: [
-                            'Januari',
-                            'Februari',
-                            'Maret',
-                            'April',
-                            'Mei',
-                            'Juni',
-                            'Juli',
-                            'Agustus',
-                            'September',
-                            'Oktober',
-                            'November',
-                            'Desember'
-                          ].map((String value) {
+                          items: monthNumbers.keys.map((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
                               child: Text(
@@ -209,7 +203,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             );
                           }).toList(),
-                          onChanged: (String? newValue) {},
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                selectedMonth = newValue;
+                              });
+                            }
+                          },
                         ),
                       ),
                     ],
