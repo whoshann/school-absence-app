@@ -12,11 +12,12 @@ class Main extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Attendance App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: SplashScreen(), // SplashScreen sebagai halaman pertama
+      home: SplashScreen(),
     );
   }
 }

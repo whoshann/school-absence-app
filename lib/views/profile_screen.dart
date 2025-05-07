@@ -6,6 +6,7 @@ import 'package:student_absence/models/student.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:student_absence/utils/token_helper.dart';
 import 'package:get/get.dart';
+import 'package:student_absence/views/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -115,8 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               onPressed: () async {
                                 // Implementasi logout
                                 await TokenHelper.removeToken();
-                                Get.offAllNamed(
-                                    '/login'); // Navigasi ke halaman login
+                                Get.off(() => LoginScreen());// Navigasi ke halaman login
                               },
                               icon: Icon(Icons.logout, size: 20),
                               label: Text(

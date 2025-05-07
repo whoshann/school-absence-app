@@ -337,7 +337,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 _buildStatusLegend(
                                     'Alpha', Color.fromRGBO(223, 5, 5, 1)),
                                 _buildStatusLegend(
-                                    'Terlambat', Color.fromRGBO(12, 241, 39, 1)),
+                                    'Terlambat', Color.fromRGBO(102, 102, 102, 1)),
                               ],
                             ),
                           ],

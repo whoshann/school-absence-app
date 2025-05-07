@@ -68,6 +68,7 @@ flutter:
   assets:
     - assets/images/onboarding.png
     - assets/images/presence.png
+    - assets/images/school-management-website.png
     - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see

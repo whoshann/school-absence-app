@@ -82,15 +82,9 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Text Logo
-            Text(
-              'Logo',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-                color: const Color.fromRGBO(31, 80, 154, 1),
-              ),
-            ),
-            SizedBox(height: 10), // Jarak antar elemen
+            Image.asset('assets/images/school-management-website.png',
+                width: 150, height: 150),
+            SizedBox(height: 10),
 
             // Selamat Datang Kembali
             Text(

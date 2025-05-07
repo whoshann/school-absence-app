@@ -50,11 +50,13 @@ class PresenceService {
     try {
       final token = await TokenHelper.getToken();
 
+      final wibDateTime = date.toUtc().add(Duration(hours: 7));
+
       // Prepare form data
       final Map<String, dynamic> formMap = {
         'studentId': studentId,
         'status': status,
-        'date': date.toIso8601String(),
+        'date': wibDateTime.toIso8601String(),
       };
 
       // Add location data if status is Present
