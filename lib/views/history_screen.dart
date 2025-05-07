@@ -30,7 +30,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     'sakit': Color.fromRGBO(229, 127, 5, 1),
     'izin': Color.fromRGBO(10, 151, 176, 1),
     'alpha': Color.fromRGBO(223, 5, 5, 1),
-    'terlambat': Color.fromRGBO(12, 241, 39, 1)
+    'terlambat': Color.fromRGBO(102, 102, 102, 1)
   };
 
   @override
@@ -336,8 +336,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     'Izin', Color.fromRGBO(10, 151, 176, 1)),
                                 _buildStatusLegend(
                                     'Alpha', Color.fromRGBO(223, 5, 5, 1)),
-                                _buildStatusLegend(
-                                    'Terlambat', Color.fromRGBO(102, 102, 102, 1)),
+                                _buildStatusLegend('Terlambat',
+                                    Color.fromRGBO(102, 102, 102, 1)),
                               ],
                             ),
                           ],

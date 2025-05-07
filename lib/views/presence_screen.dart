@@ -21,6 +21,7 @@ class PresenceScreen extends StatefulWidget {
 
 class _PresenceScreenState extends State<PresenceScreen> {
   final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _noteController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   final logger = Logger();
   String? _presensi;
@@ -35,6 +36,10 @@ class _PresenceScreenState extends State<PresenceScreen> {
   void initState() {
     super.initState();
     _getCurrentLocation();
+
+    // Set tanggal hari ini secara otomatis
+    final now = DateTime.now();
+    _dateController.text = "${now.toLocal()}".split(' ')[0];
   }
 
   Future<void> _getCurrentLocation() async {
@@ -75,26 +80,11 @@ class _PresenceScreenState extends State<PresenceScreen> {
     }
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    DateTime? selectedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-
-    if (selectedDate != null) {
-      setState(() {
-        _dateController.text = "${selectedDate.toLocal()}".split(' ')[0];
-      });
-    }
-  }
-
   Future<void> _chooseFile() async {
-    if (_presensi == 'Present') {
+    if (_presensi == 'Present' || _presensi == 'Late') {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Tidak perlu upload gambar jika hadir'),
+          content: Text('Tidak perlu upload gambar jika hadir atau terlambat'),
           backgroundColor: Colors.grey,
         ),
       );
@@ -203,8 +193,10 @@ class _PresenceScreenState extends State<PresenceScreen> {
         }
       }
 
-      // Validasi foto untuk status selain Present
-      if (backendStatus != 'Present' && _imageFile == null) {
+      // Validasi foto untuk status selain Present dan Late
+      if (backendStatus != 'Present' &&
+          backendStatus != 'Late' &&
+          _imageFile == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Mohon upload foto surat izin/sakit'),
@@ -238,6 +230,7 @@ class _PresenceScreenState extends State<PresenceScreen> {
         date: today,
         position: backendStatus == 'Present' ? _currentPosition : null,
         photo: _imageFile,
+        note: _noteController.text.isNotEmpty ? _noteController.text : null,
       );
 
       if (!mounted) return;
@@ -258,7 +251,7 @@ class _PresenceScreenState extends State<PresenceScreen> {
         _presensi = null;
         _imageFile = null;
         _fileName = null;
-        _dateController.text = '';
+        _noteController.text = '';
       });
     } catch (e) {
       if (!mounted) return;
@@ -324,10 +317,13 @@ class _PresenceScreenState extends State<PresenceScreen> {
                         onPresensiChanged: (value) {
                           setState(() {
                             _presensi = value;
-                            if (value == 'Present' || value == 'Late') {
+                            if (value == 'Present') {
                               _imageFile = null;
                               _fileName = null;
                               _checkIfWithinSchool();
+                            } else if (value == 'Late') {
+                              _imageFile = null;
+                              _fileName = null;
                             }
                           });
                         },
@@ -335,8 +331,12 @@ class _PresenceScreenState extends State<PresenceScreen> {
                         fileName: _fileName,
                         onChooseFile: _chooseFile,
                         dateController: _dateController,
-                        onSelectDate: _selectDate,
+                        noteController: _noteController,
                         onSubmit: _submitPresence,
+                        showNote:
+                            _presensi == 'Sick' || _presensi == 'Permission',
+                        enableImageUpload:
+                            _presensi != 'Present' && _presensi != 'Late',
                       ),
                     ],
                   ),
