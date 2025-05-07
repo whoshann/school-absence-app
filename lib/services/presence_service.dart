@@ -64,9 +64,8 @@ class PresenceService {
         if (position == null) {
           throw Exception('Lokasi diperlukan untuk status Hadir');
         }
-        formMap['latitude'] = position.latitude.toString(); // Convert to string
-        formMap['longitude'] =
-            position.longitude.toString(); // Convert to string
+        formMap['latitude'] = position.latitude;
+        formMap['longitude'] = position.longitude;
       }
 
       // Add note if present

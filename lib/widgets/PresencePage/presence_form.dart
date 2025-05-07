@@ -10,8 +10,10 @@ class PresenceForm extends StatelessWidget {
   final String? fileName;
   final VoidCallback onChooseFile;
   final TextEditingController dateController;
-  final Function(BuildContext) onSelectDate;
+  final TextEditingController noteController;
   final VoidCallback onSubmit;
+  final bool showNote;
+  final bool enableImageUpload;
 
   const PresenceForm({
     Key? key,
@@ -21,11 +23,14 @@ class PresenceForm extends StatelessWidget {
     required this.fileName,
     required this.onChooseFile,
     required this.dateController,
-    required this.onSelectDate,
+    required this.noteController,
     required this.onSubmit,
+    this.showNote = false,
+    this.enableImageUpload = true,
   }) : super(key: key);
 
   List<DropdownMenuItem<String>> _buildStatusItems() {
+    // Uncomment time validation
     final now = DateTime.now();
     final cutoffTime = DateTime(
       now.year,
@@ -91,7 +96,7 @@ class PresenceForm extends StatelessWidget {
         ),
         SizedBox(height: 20),
 
-//input gambar
+        //input gambar
         TextFormField(
           readOnly: true,
           decoration: InputDecoration(
@@ -101,7 +106,7 @@ class PresenceForm extends StatelessWidget {
               color: Colors.grey[700],
             ),
             filled: true,
-            fillColor: presensi == 'Present'
+            fillColor: !enableImageUpload
                 ? Colors.grey[200]
                 : Color.fromRGBO(241, 244, 255, 1),
             border: InputBorder.none,
@@ -109,7 +114,7 @@ class PresenceForm extends StatelessWidget {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
               borderSide: BorderSide(
-                color: presensi == 'Present'
+                color: !enableImageUpload
                     ? Colors.grey
                     : Color.fromRGBO(31, 80, 154, 1),
                 width: 2,
@@ -120,9 +125,9 @@ class PresenceForm extends StatelessWidget {
               borderSide: BorderSide(color: Colors.transparent, width: 2),
             ),
             suffixIcon: ElevatedButton(
-              onPressed: presensi == 'Present' ? null : onChooseFile,
+              onPressed: !enableImageUpload ? null : onChooseFile,
               style: ElevatedButton.styleFrom(
-                backgroundColor: presensi == 'Present'
+                backgroundColor: !enableImageUpload
                     ? Colors.grey
                     : Color.fromRGBO(31, 80, 154, 1),
                 shape: RoundedRectangleBorder(
@@ -136,11 +141,11 @@ class PresenceForm extends StatelessWidget {
                 ),
               ),
             ),
-            helperText: presensi == 'Present'
-                ? 'Tidak perlu upload gambar jika hadir'
+            helperText: !enableImageUpload
+                ? 'Tidak perlu upload gambar untuk status ini'
                 : 'Upload file surat izin/sakit',
             helperStyle: GoogleFonts.plusJakartaSans(
-              color: presensi == 'Present' ? Colors.grey : Colors.grey[600],
+              color: !enableImageUpload ? Colors.grey : Colors.grey[600],
               fontSize: 12,
             ),
           ),
@@ -169,36 +174,71 @@ class PresenceForm extends StatelessWidget {
         ],
         SizedBox(height: 20),
 
-//Input tanggal
+        // Input catatan (hanya muncul untuk status Sakit dan Izin)
+        if (showNote) ...[
+          TextFormField(
+            controller: noteController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              labelText: 'Catatan (Opsional)',
+              labelStyle: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+              hintText: 'Masukkan alasan atau catatan tambahan',
+              filled: true,
+              fillColor: Color.fromRGBO(241, 244, 255, 1),
+              border: InputBorder.none,
+              contentPadding:
+                  EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+                borderSide:
+                    BorderSide(color: Color.fromRGBO(31, 80, 154, 1), width: 2),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+                borderSide: BorderSide(color: Colors.transparent, width: 2),
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+        ],
+
+        //Input tanggal (dinonaktifkan, menampilkan tanggal hari ini)
         TextFormField(
           controller: dateController,
           readOnly: true,
+          enabled: false,
           decoration: InputDecoration(
-            labelText: 'Masukkan Tanggal',
+            labelText: 'Tanggal (Hari Ini)',
             labelStyle: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w600,
               color: Colors.grey[700],
             ),
             filled: true,
-            fillColor: Color.fromRGBO(241, 244, 255, 1),
+            fillColor: Colors.grey[200],
             border: InputBorder.none,
             contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
-              borderSide:
-                  BorderSide(color: Color.fromRGBO(31, 80, 154, 1), width: 2),
+              borderSide: BorderSide(color: Colors.grey, width: 2),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
               borderSide: BorderSide(color: Colors.transparent, width: 2),
             ),
-            suffixIcon: Icon(Icons.calendar_today),
+            suffixIcon: Icon(Icons.calendar_today, color: Colors.grey),
+            helperText: 'Absensi hanya dapat dilakukan untuk hari ini',
+            helperStyle: GoogleFonts.plusJakartaSans(
+              color: Colors.grey,
+              fontSize: 12,
+            ),
           ),
-          onTap: () => onSelectDate(context),
         ),
         SizedBox(height: 35),
 
-//Button kirim
+        //Button kirim
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
