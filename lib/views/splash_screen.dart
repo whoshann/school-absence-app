@@ -14,22 +14,18 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     // Menggunakan GetX untuk navigasi setelah 3 detik
     Future.delayed(Duration(seconds: 3), () {
-      Get.off(() => OnboardingScreen()); // Navigasi menggunakan GetX
+      Get.off(() => OnboardingScreen());
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(31, 80, 154, 1), // Latar belakang biru
+      backgroundColor: const Color.fromRGBO(31, 80, 154, 1),
       body: Center(
-        child: Text(
-          'Logo', 
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 30, 
-            color: Colors.white, 
-            fontWeight: FontWeight.bold,
-          ),
+        child: Image.asset(
+          'assets/images/splash-screen-logo.png',
+          width: 100,
         ),
       ),
     );
