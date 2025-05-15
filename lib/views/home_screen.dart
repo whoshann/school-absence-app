@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.only(
-                            left: 23.0, top: 40.0), // Mengurangi jarak padding
+                            left: 23.0, top: 40.0), 
                         child: Align(
                           alignment: Alignment.topLeft,
                           child: Text(
