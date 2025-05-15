@@ -40,17 +40,17 @@ class CustomNavigationBar extends StatelessWidget {
     ];
 
     return Padding(
-      padding: const EdgeInsets.all(16.0), // Jarak dari tepi layar
+      padding: const EdgeInsets.all(16.0),
       child: Container(
-        height: 70,
+        height: 80,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(40),
           boxShadow: [
             BoxShadow(
               color: Colors.black26,
-              blurRadius: 5,
-              offset: Offset(0, 3),
+              blurRadius: 1,
+              offset: Offset(0, 0),
             ),
           ],
         ),
@@ -66,15 +66,15 @@ class CustomNavigationBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isSelected
-                      ? const Color.fromRGBO(31, 80, 154, 1) // Biru jika aktif
+                      ? const Color.fromRGBO(31, 80, 154, 1) 
                       : Colors.transparent,
                 ),
                 child: Icon(
                   icons[index],
-                  size: 30,
+                  size: 40,
                   color: isSelected
-                      ? Colors.white // Putih jika aktif
-                      : const Color.fromRGBO(31, 80, 154, 1),
+                      ? Colors.white 
+                      : const Color.fromARGB(255, 133, 133, 133),
                 ),
               ),
             );

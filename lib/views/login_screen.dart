@@ -73,118 +73,146 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Padding(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 30.0), // Padding lebih besar
-        child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center, // Menjaga elemen berada di atas
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Text Logo
-            Image.asset('assets/images/school-management-website.png',
-                width: 150, height: 150),
-            SizedBox(height: 10),
-
-            // Selamat Datang Kembali
-            Text(
-              'Selamat Datang Kembali',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
-                color: const Color.fromARGB(255, 101, 101, 101),
-              ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30.0),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height,
             ),
-            SizedBox(height: 50), // Menambah jarak lebih besar antar elemen
-
-            // Input Username
-            TextField(
-              controller: _usernameController,
-              decoration: InputDecoration(
-                labelText: 'Username',
-                filled: true,
-                fillColor: Color.fromRGBO(
-                    241, 244, 255, 1), // Warna background input biru
-                border: InputBorder.none, // Menghilangkan border default
-                contentPadding: EdgeInsets.symmetric(
-                    vertical: 12, horizontal: 16), // Padding dalam input
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0), // Sudut tumpul
-                  borderSide: BorderSide(
-                      color: Color.fromRGBO(31, 80, 154, 1),
-                      width: 2), // Warna border saat fokus
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0), // Sudut tumpul
-                  borderSide: BorderSide(
-                      color: Colors.transparent,
-                      width: 2), // Tidak ada border saat tidak fokus
-                ),
-              ),
-            ),
-            SizedBox(height: 35), // Jarak antar elemen
-
-            // Input Password
-            TextField(
-              controller: _passwordController,
-              obscureText: !_isPasswordVisible,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                filled: true,
-                fillColor: Color.fromRGBO(
-                    241, 244, 255, 1), // Warna background input biru
-                border: InputBorder.none, // Menghilangkan border default
-                contentPadding: EdgeInsets.symmetric(
-                    vertical: 12, horizontal: 16), // Padding dalam input
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0), // Sudut tumpul
-                  borderSide: BorderSide(
-                      color: Color.fromRGBO(31, 80, 154, 1),
-                      width: 2), // Warna border saat fokus
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0), // Sudut tumpul
-                  borderSide: BorderSide(
-                      color: Colors.transparent,
-                      width: 2), // Tidak ada border saat tidak fokus
-                ),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _isPasswordVisible
-                        ? Icons.visibility
-                        : Icons.visibility_off,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _isPasswordVisible = !_isPasswordVisible;
-                    });
-                  },
-                ),
-              ),
-            ),
-            SizedBox(height: 35), // Jarak antar elemen
-
-            // Button Masuk
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  backgroundColor: const Color.fromRGBO(31, 80, 154, 1),
-                ),
-                child: _isLoading
-                    ? CircularProgressIndicator(color: Colors.white)
-                    : Text(
-                        'Masuk',
-                        style: GoogleFonts.plusJakartaSans(
-                            fontSize: 20, color: Colors.white),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Text "Sis" di atas logo
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 60),
+                    child: Text(
+                      "Sis",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: const Color.fromRGBO(44, 44, 44, 1),
                       ),
+                    ),
+                  ),
+
+                  // Logo
+                  Image.asset('assets/images/school-management-website.png',
+                      width: 200, height: 200),
+                  SizedBox(height: 20),
+
+                  // Selamat Datang Kembali
+                  Column(
+                    children: [
+                      Text(
+                        'Selamat Datang',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          color: Color.fromRGBO(44, 44, 44, 1),
+                        ),
+                      ),
+                      Text(
+                        'Kembali!',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          color: Color.fromRGBO(44, 44, 44, 1),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 50),
+
+                  // Input Username
+                  TextField(
+                    controller: _usernameController,
+                    decoration: InputDecoration(
+                      labelText: 'Masukkan NIS',
+                      filled: true,
+                      fillColor: Color.fromRGBO(240, 240, 240, 1),
+                      border: InputBorder.none,
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        borderSide: BorderSide(
+                            color: Color.fromRGBO(31, 80, 154, 1), width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide:
+                            BorderSide(color: Colors.transparent, width: 2),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 35),
+
+                  // Input Password
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: !_isPasswordVisible,
+                    decoration: InputDecoration(
+                      labelText: 'Masukkan Password',
+                      filled: true,
+                      fillColor: Color.fromRGBO(240, 240, 240, 1),
+                      border: InputBorder.none,
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        borderSide: BorderSide(
+                            color: Color.fromRGBO(31, 80, 154, 1), width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide:
+                            BorderSide(color: Colors.transparent, width: 2),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 35),
+
+                  // Button Masuk
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _handleLogin,
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        backgroundColor: const Color.fromRGBO(31, 80, 154, 1),
+                      ),
+                      child: _isLoading
+                          ? CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                              'Masuk',
+                              style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 20, color: Colors.white),
+                            ),
+                    ),
+                  ),
+                  SizedBox(height: 30),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
