@@ -57,9 +57,13 @@ class PresenceForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Deteksi ukuran layar untuk responsivitas
+    final bool isSmallScreen = MediaQuery.of(context).size.width < 380;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Dropdown Pilih Presensi
         DropdownButtonFormField<String>(
           value: presensi,
           hint: Text(
@@ -74,16 +78,16 @@ class PresenceForm extends StatelessWidget {
               color: Colors.grey[700],
             ),
             filled: true,
-            fillColor: Color.fromRGBO(241, 244, 255, 1),
+            fillColor: Color.fromRGBO(240, 240, 240, 1),
             border: InputBorder.none,
             contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
+              borderRadius: BorderRadius.circular(12.0),
               borderSide:
                   BorderSide(color: Color.fromRGBO(31, 80, 154, 1), width: 2),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
+              borderRadius: BorderRadius.circular(12.0),
               borderSide: BorderSide(color: Colors.transparent, width: 2),
             ),
           ),
@@ -94,25 +98,47 @@ class PresenceForm extends StatelessWidget {
             return null;
           },
         ),
-        SizedBox(height: 20),
+        SizedBox(height: 24),
 
-        //input gambar
+        // Label untuk file upload
+        Row(
+          children: [
+            Text(
+              'Masukkan Foto Surat',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: isSmallScreen ? 14 : 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+            ),
+            SizedBox(width: 4),
+            Text(
+              !enableImageUpload ? '' : '*',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: isSmallScreen ? 14 : 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+
+        // Input gambar
         TextFormField(
           readOnly: true,
           decoration: InputDecoration(
-            labelText: 'Masukkan Foto Surat',
-            labelStyle: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[700],
-            ),
             filled: true,
             fillColor: !enableImageUpload
                 ? Colors.grey[200]
-                : Color.fromRGBO(241, 244, 255, 1),
-            border: InputBorder.none,
+                : Color.fromRGBO(240, 240, 240, 1),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
+              borderSide: BorderSide.none,
+            ),
             contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
+              borderRadius: BorderRadius.circular(12.0),
               borderSide: BorderSide(
                 color: !enableImageUpload
                     ? Colors.grey
@@ -121,7 +147,7 @@ class PresenceForm extends StatelessWidget {
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
+              borderRadius: BorderRadius.circular(12.0),
               borderSide: BorderSide(color: Colors.transparent, width: 2),
             ),
             suffixIcon: ElevatedButton(
@@ -143,7 +169,7 @@ class PresenceForm extends StatelessWidget {
             ),
             helperText: !enableImageUpload
                 ? 'Tidak perlu upload gambar untuk status ini'
-                : 'Upload file surat izin/sakit',
+                : 'Upload file surat izin/sakit wajib diisi',
             helperStyle: GoogleFonts.plusJakartaSans(
               color: !enableImageUpload ? Colors.grey : Colors.grey[600],
               fontSize: 12,
@@ -176,28 +202,37 @@ class PresenceForm extends StatelessWidget {
 
         // Input catatan (hanya muncul untuk status Sakit dan Izin)
         if (showNote) ...[
+          // Label untuk catatan
+          Text(
+            'Catatan (Opsional)',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: isSmallScreen ? 14 : 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+          ),
+          SizedBox(height: 8),
+
           TextFormField(
             controller: noteController,
             maxLines: 3,
             decoration: InputDecoration(
-              labelText: 'Catatan (Opsional)',
-              labelStyle: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
-              ),
               hintText: 'Masukkan alasan atau catatan tambahan',
               filled: true,
-              fillColor: Color.fromRGBO(241, 244, 255, 1),
-              border: InputBorder.none,
+              fillColor: Color.fromRGBO(240, 240, 240, 1),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                borderSide: BorderSide.none,
+              ),
               contentPadding:
                   EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
+                borderRadius: BorderRadius.circular(12.0),
                 borderSide:
                     BorderSide(color: Color.fromRGBO(31, 80, 154, 1), width: 2),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
+                borderRadius: BorderRadius.circular(12.0),
                 borderSide: BorderSide(color: Colors.transparent, width: 2),
               ),
             ),
@@ -205,40 +240,9 @@ class PresenceForm extends StatelessWidget {
           SizedBox(height: 20),
         ],
 
-        //Input tanggal (dinonaktifkan, menampilkan tanggal hari ini)
-        TextFormField(
-          controller: dateController,
-          readOnly: true,
-          enabled: false,
-          decoration: InputDecoration(
-            labelText: 'Tanggal (Hari Ini)',
-            labelStyle: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[700],
-            ),
-            filled: true,
-            fillColor: Colors.grey[200],
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
-              borderSide: BorderSide(color: Colors.grey, width: 2),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
-              borderSide: BorderSide(color: Colors.transparent, width: 2),
-            ),
-            suffixIcon: Icon(Icons.calendar_today, color: Colors.grey),
-            helperText: 'Absensi hanya dapat dilakukan untuk hari ini',
-            helperStyle: GoogleFonts.plusJakartaSans(
-              color: Colors.grey,
-              fontSize: 12,
-            ),
-          ),
-        ),
-        SizedBox(height: 35),
+        SizedBox(height: 15),
 
-        //Button kirim
+        // Button kirim
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -246,7 +250,7 @@ class PresenceForm extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               padding: EdgeInsets.symmetric(vertical: 15),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
+                borderRadius: BorderRadius.circular(12.0),
               ),
               backgroundColor: const Color.fromRGBO(31, 80, 154, 1),
             ),
