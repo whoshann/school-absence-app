@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:student_absence/widgets/PresencePage/location_map_widget.dart';
 import 'package:student_absence/widgets/PresencePage/presence_form.dart';
-import 'package:student_absence/widgets/PresencePage/presence_header.dart';
-import 'package:student_absence/widgets/PresencePage/welcome_card.dart';
 import 'package:student_absence/widgets/BottomNavbar/bottom_nav_bar.dart';
 import 'package:student_absence/services/location_services.dart';
 import 'package:student_absence/constans/presence_coordinat_constant.dart';
@@ -37,9 +36,13 @@ class _PresenceScreenState extends State<PresenceScreen> {
     super.initState();
     _getCurrentLocation();
 
-    // Set tanggal hari ini secara otomatis
+    // Set tanggal hari ini dengan format "dd/MM/yy"
     final now = DateTime.now();
-    _dateController.text = "${now.toLocal()}".split(' ')[0];
+    final String day = now.day.toString().padLeft(2, '0');
+    final String month = now.month.toString().padLeft(2, '0');
+    final String year =
+        now.year.toString().substring(2, 4); // Ambil 2 digit terakhir
+    _dateController.text = "$day/$month/$year";
   }
 
   Future<void> _getCurrentLocation() async {
@@ -194,8 +197,7 @@ class _PresenceScreenState extends State<PresenceScreen> {
       }
 
       // Validasi foto untuk status selain Present dan Late
-      if (backendStatus != 'Present' &&
-          backendStatus != 'Late' &&
+      if ((backendStatus == 'Permission' || backendStatus == 'Sick') &&
           _imageFile == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -220,14 +222,13 @@ class _PresenceScreenState extends State<PresenceScreen> {
       // Dapatkan current student
       final student = await _studentService.getCurrentStudent();
 
-      // Gunakan tanggal hari ini
+      // Gunakan DateTime.now() yang menyertakan waktu aktual, bukan hanya tanggal
       final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
 
       await PresenceService().submitPresence(
         studentId: student.id,
         status: backendStatus,
-        date: today,
+        date: now, // Menggunakan waktu saat ini
         position: backendStatus == 'Present' ? _currentPosition : null,
         photo: _imageFile,
         note: _noteController.text.isNotEmpty ? _noteController.text : null,
@@ -275,78 +276,260 @@ class _PresenceScreenState extends State<PresenceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Mendeteksi ukuran layar
+    final bool isSmallScreen = MediaQuery.of(context).size.width < 380;
+    final double contentPadding = isSmallScreen ? 20.0 : 24.0;
+
     return Scaffold(
-      backgroundColor: Color.fromRGBO(242, 242, 242, 1),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              PresenceHeader(),
-              SizedBox(height: 30),
-              WelcomeCard(),
-              SizedBox(height: 20),
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                color: const Color.fromRGBO(255, 255, 255, 1),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 30.0, 16.0, 30.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      LocationMapWidget(
-                        currentPosition: _currentPosition,
-                        isLoadingLocation: _isLoadingLocation,
-                        onRetryLocation: _getCurrentLocation,
-                        presensi: _presensi,
-                        isWithinSchoolArea: isWithinSchoolArea,
-                        smkn4Location: PresenceConstants.SMKN4_LOCATION,
-                        visualRadius: PresenceConstants.VISUAL_RADIUS,
-                        onLocationButtonPressed: () {
-                          _getCurrentLocation();
-                          if (_presensi == 'Present') _checkIfWithinSchool();
-                        },
+      backgroundColor: Color.fromRGBO(31, 80, 154, 1),
+      body: Column(
+        children: [
+          // Konten yang bisa di-scroll
+          Expanded(
+            child: SingleChildScrollView(
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    // Header dengan text "Absensi" di tengah
+                    Padding(
+                      padding: EdgeInsets.only(
+                        top: isSmallScreen ? 50.0 : 60.0,
+                        bottom: isSmallScreen ? 25.0 : 35.0,
                       ),
-                      SizedBox(height: 20),
-                      PresenceForm(
-                        presensi: _presensi,
-                        onPresensiChanged: (value) {
-                          setState(() {
-                            _presensi = value;
-                            if (value == 'Present') {
-                              _imageFile = null;
-                              _fileName = null;
-                              _checkIfWithinSchool();
-                            } else if (value == 'Late') {
-                              _imageFile = null;
-                              _fileName = null;
-                            }
-                          });
-                        },
-                        imageFile: _imageFile,
-                        fileName: _fileName,
-                        onChooseFile: _chooseFile,
-                        dateController: _dateController,
-                        noteController: _noteController,
-                        onSubmit: _submitPresence,
-                        showNote:
-                            _presensi == 'Sick' || _presensi == 'Permission',
-                        enableImageUpload:
-                            _presensi != 'Present' && _presensi != 'Late',
+                      child: Center(
+                        child: Text(
+                          'Absensi',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: isSmallScreen ? 22 : 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+
+                    // Konten utama (card putih)
+                    Container(
+                      width: double.infinity,
+                      constraints: BoxConstraints(
+                        minHeight: MediaQuery.of(context).size.height -
+                            MediaQuery.of(context).padding.top -
+                            110, // Untuk memastikan card menutupi seluruh screen
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(isSmallScreen ? 30 : 40),
+                          topRight: Radius.circular(isSmallScreen ? 30 : 40),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(contentPadding),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Card kuning dengan ikon dan teks (di dalam card putih)
+                            Center(
+                              child: Card(
+                                margin: EdgeInsets.only(
+                                    bottom: isSmallScreen ? 20.0 : 24.0),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                      isSmallScreen ? 12 : 16),
+                                ),
+                                color: Color.fromRGBO(255, 249, 230, 1),
+                                child: Padding(
+                                  padding: EdgeInsets.all(
+                                      isSmallScreen ? 16.0 : 20.0),
+                                  child: Row(
+                                    children: [
+                                      ClipOval(
+                                        child: Image.asset(
+                                          'assets/images/presence.png',
+                                          height: isSmallScreen ? 60 : 70,
+                                          width: isSmallScreen ? 60 : 70,
+                                          fit: BoxFit.cover,
+                                          alignment: Alignment.topCenter,
+                                        ),
+                                      ),
+                                      SizedBox(width: isSmallScreen ? 16 : 20),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Kamu belum absen hari ini',
+                                              style:
+                                                  GoogleFonts.plusJakartaSans(
+                                                fontSize:
+                                                    isSmallScreen ? 16 : 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color.fromRGBO(
+                                                    44, 44, 44, 1),
+                                              ),
+                                            ),
+                                            SizedBox(height: 4),
+                                            Text(
+                                              'Yuk segera isi form di bawah ya!',
+                                              style:
+                                                  GoogleFonts.plusJakartaSans(
+                                                fontSize:
+                                                    isSmallScreen ? 11 : 13,
+                                                color: Color.fromRGBO(
+                                                    44, 44, 44, 1),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // Form Absensi text
+                            Text(
+                              'Form Absensi',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: isSmallScreen ? 18 : 22,
+                                fontWeight: FontWeight.bold,
+                                color: Color.fromRGBO(44, 44, 44, 1),
+                              ),
+                            ),
+                            SizedBox(height: isSmallScreen ? 20 : 24),
+
+                            // Tanggal (Hari Ini)
+                            Text(
+                              'Tanggal (Hari Ini)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: isSmallScreen ? 14 : 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                            SizedBox(height: 8),
+
+                            // Input tanggal (dengan sudut rounded)
+                            TextFormField(
+                              controller: _dateController,
+                              readOnly: true,
+                              enabled: false,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: Colors.grey[200],
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12.0),
+                                  borderSide: BorderSide.none,
+                                ),
+                                contentPadding: EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 16),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12.0),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey, width: 2),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12.0),
+                                  borderSide: BorderSide(
+                                      color: Colors.transparent, width: 2),
+                                ),
+                                suffixIcon: Icon(Icons.calendar_today,
+                                    color: Colors.grey),
+                              ),
+                            ),
+                            SizedBox(height: 20),
+
+                            // Widget lokasi
+                            LocationMapWidget(
+                              currentPosition: _currentPosition,
+                              isLoadingLocation: _isLoadingLocation,
+                              onRetryLocation: _getCurrentLocation,
+                              presensi: _presensi,
+                              isWithinSchoolArea: isWithinSchoolArea,
+                              smkn4Location: PresenceConstants.SMKN4_LOCATION,
+                              visualRadius: PresenceConstants.VISUAL_RADIUS,
+                              onLocationButtonPressed: () {
+                                _getCurrentLocation();
+                                if (_presensi == 'Present')
+                                  _checkIfWithinSchool();
+                              },
+                            ),
+                            SizedBox(height: 20),
+
+                            // Label untuk Pilih Presensi
+                            Row(
+                              children: [
+                                Text(
+                                  'Pilih Presensi',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: isSmallScreen ? 14 : 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  '*',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: isSmallScreen ? 14 : 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+
+                            // Form presensi
+                            PresenceForm(
+                              presensi: _presensi,
+                              onPresensiChanged: (value) {
+                                setState(() {
+                                  _presensi = value;
+                                  if (value == 'Present') {
+                                    _imageFile = null;
+                                    _fileName = null;
+                                    _checkIfWithinSchool();
+                                  } else if (value == 'Late') {
+                                    _imageFile = null;
+                                    _fileName = null;
+                                  }
+                                });
+                              },
+                              imageFile: _imageFile,
+                              fileName: _fileName,
+                              onChooseFile: _chooseFile,
+                              dateController: _dateController,
+                              noteController: _noteController,
+                              onSubmit: _submitPresence,
+                              showNote: _presensi == 'Sick' ||
+                                  _presensi == 'Permission',
+                              enableImageUpload:
+                                  _presensi != 'Present' && _presensi != 'Late',
+                            ),
+
+                            // Tambahkan padding di bawah untuk memberikan ruang saat scroll
+                            SizedBox(height: isSmallScreen ? 20 : 30),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+
+          // Bottom Navigation Bar dalam Container warna putih
+          Container(
+            color: Colors.white,
+            child: CustomNavigationBar(currentIndex: 1),
+          ),
+        ],
       ),
-      bottomNavigationBar: CustomNavigationBar(currentIndex: 1),
     );
   }
 }

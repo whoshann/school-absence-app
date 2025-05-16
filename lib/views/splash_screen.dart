@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart'; // Pastikan untuk import GetX
-import 'package:google_fonts/google_fonts.dart';
-import 'package:student_absence/views/onboarding_screen.dart'; // Import OnboardingScreen
+import 'package:get/get.dart';
+import 'package:student_absence/views/onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -25,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Center(
         child: Image.asset(
           'assets/images/splash-screen-logo.png',
-          width: 100,
+          width: 150,
         ),
       ),
     );
