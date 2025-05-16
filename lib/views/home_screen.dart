@@ -6,6 +6,37 @@ import 'package:student_absence/services/student_service.dart';
 import '../services/absence_service.dart';
 import 'package:logger/logger.dart';
 
+// Class Badge untuk menampilkan ikon pada chart
+class _Badge extends StatelessWidget {
+  final IconData iconData;
+  final Color color;
+  final double size;
+
+  const _Badge(this.iconData, this.color, {required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Icon(
+        iconData,
+        color: color,
+        size: size,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 3,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class HomeScreen extends StatefulWidget {
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -15,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final StudentService _studentService = StudentService();
   final AbsenceService _absenceService = AbsenceService();
   final logger = Logger();
-  String selectedMonth = 'Januari';
+  late String selectedMonth;
   Map<String, dynamic>? _cachedData;
   bool _isLoading = true;
 
@@ -34,9 +65,22 @@ class _HomeScreenState extends State<HomeScreen> {
     'Desember': 12,
   };
 
+  // Fungsi helper untuk mendapatkan nama bulan dari nomor bulan
+  String getMonthName(int month) {
+    return monthNumbers.entries
+        .firstWhere(
+          (entry) => entry.value == month,
+          orElse: () => const MapEntry('Januari', 1),
+        )
+        .key;
+  }
+
   @override
   void initState() {
     super.initState();
+    // Set bulan default menjadi bulan saat ini
+    final currentMonth = DateTime.now().month;
+    selectedMonth = getMonthName(currentMonth);
     _loadData();
   }
 
@@ -258,7 +302,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ],
                           ),
-                          SizedBox(height: isSmallScreen ? 16 : 24),
+                          SizedBox(height: isSmallScreen ? 40 : 50),
 
                           // Indikator loading di tengah saat refresh
                           if (_isLoading)
@@ -274,71 +318,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           // Tempat untuk chart
                           Center(
                             child: SizedBox(
-                              height: isSmallScreen ? 250 : 300,
-                              width: isSmallScreen ? 250 : 300,
-                              child: PieChart(
-                                PieChartData(
-                                  sections: [
-                                    PieChartSectionData(
-                                      color: Color.fromRGBO(31, 80, 154, 1),
-                                      value: (statistics['present']
-                                                  ?.toDouble() ??
-                                              0) +
-                                          (statistics['late']?.toDouble() ?? 0),
-                                      title:
-                                          '${_calculatePercentage((statistics['present'] ?? 0) + (statistics['late'] ?? 0), statistics)}%',
-                                      titleStyle: GoogleFonts.plusJakartaSans(
-                                        fontSize: isSmallScreen ? 10 : 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    PieChartSectionData(
-                                      color: Color.fromRGBO(229, 127, 5, 1),
-                                      value: statistics['permission']
-                                              ?.toDouble() ??
-                                          0,
-                                      title:
-                                          '${_calculatePercentage(statistics['permission'] ?? 0, statistics)}%',
-                                      titleStyle: GoogleFonts.plusJakartaSans(
-                                        fontSize: isSmallScreen ? 10 : 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    PieChartSectionData(
-                                      color: Color.fromRGBO(10, 151, 176, 1),
-                                      value:
-                                          statistics['sick']?.toDouble() ?? 0,
-                                      title:
-                                          '${_calculatePercentage(statistics['sick'] ?? 0, statistics)}%',
-                                      titleStyle: GoogleFonts.plusJakartaSans(
-                                        fontSize: isSmallScreen ? 10 : 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    PieChartSectionData(
-                                      color: Color.fromRGBO(223, 5, 5, 1),
-                                      value:
-                                          statistics['alpha']?.toDouble() ?? 0,
-                                      title:
-                                          '${_calculatePercentage(statistics['alpha'] ?? 0, statistics)}%',
-                                      titleStyle: GoogleFonts.plusJakartaSans(
-                                        fontSize: isSmallScreen ? 10 : 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                  centerSpaceRadius: isSmallScreen ? 40 : 50,
-                                ),
-                              ),
+                              height: isSmallScreen ? 220 : 240,
+                              width: isSmallScreen ? 220 : 240,
+                              child: _buildRoundedPieChart(
+                                  statistics, isSmallScreen),
                             ),
                           ),
-                          SizedBox(height: isSmallScreen ? 16 : 24),
+                          SizedBox(height: isSmallScreen ? 45 : 55),
 
-                          // 4 Card Statistik dengan desain baru
+                          // 4 Card Statistik
                           Padding(
                             padding: EdgeInsets.symmetric(
                                 horizontal: isSmallScreen ? 2.0 : 4.0),
@@ -548,5 +536,182 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildRoundedPieChart(
+      Map<String, int> statistics, bool isSmallScreen) {
+    final List<PieChartSectionData> sections = [];
+
+    // Nilai Hadir (present + late)
+    final presentValue =
+        (statistics['present'] ?? 0) + (statistics['late'] ?? 0);
+    if (presentValue > 0) {
+      sections.add(
+        PieChartSectionData(
+          color: const Color.fromRGBO(31, 80, 154, 1),
+          value: presentValue.toDouble(),
+          title: '${_calculatePercentage(presentValue, statistics)}%',
+          radius: isSmallScreen ? 80 : 95,
+          titleStyle: GoogleFonts.plusJakartaSans(
+            fontSize: isSmallScreen ? 10 : 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+          borderSide: BorderSide.none,
+          badgeWidget: null,
+          badgePositionPercentageOffset: 0,
+        ),
+      );
+    }
+
+    // Nilai Izin (permission)
+    final permissionValue = statistics['permission'] ?? 0;
+    if (permissionValue > 0) {
+      sections.add(
+        PieChartSectionData(
+          color: const Color.fromRGBO(229, 127, 5, 1),
+          value: permissionValue.toDouble(),
+          title: '${_calculatePercentage(permissionValue, statistics)}%',
+          radius: isSmallScreen ? 80 : 95,
+          titleStyle: GoogleFonts.plusJakartaSans(
+            fontSize: isSmallScreen ? 10 : 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+          borderSide: BorderSide.none,
+          badgeWidget: null,
+          badgePositionPercentageOffset: 0,
+        ),
+      );
+    }
+
+    // Nilai Sakit (sick)
+    final sickValue = statistics['sick'] ?? 0;
+    if (sickValue > 0) {
+      sections.add(
+        PieChartSectionData(
+          color: const Color.fromRGBO(10, 151, 176, 1),
+          value: sickValue.toDouble(),
+          title: '${_calculatePercentage(sickValue, statistics)}%',
+          radius: isSmallScreen ? 80 : 95,
+          titleStyle: GoogleFonts.plusJakartaSans(
+            fontSize: isSmallScreen ? 10 : 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+          borderSide: BorderSide.none,
+          badgeWidget: null,
+          badgePositionPercentageOffset: 0,
+        ),
+      );
+    }
+
+    // Nilai Alpha (alpha)
+    final alphaValue = statistics['alpha'] ?? 0;
+    if (alphaValue > 0) {
+      sections.add(
+        PieChartSectionData(
+          color: const Color.fromRGBO(223, 5, 5, 1),
+          value: alphaValue.toDouble(),
+          title: '${_calculatePercentage(alphaValue, statistics)}%',
+          radius: isSmallScreen ? 80 : 95,
+          titleStyle: GoogleFonts.plusJakartaSans(
+            fontSize: isSmallScreen ? 10 : 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+          borderSide: BorderSide.none,
+          badgeWidget: null,
+          badgePositionPercentageOffset: 0,
+        ),
+      );
+    }
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        PieChart(
+          PieChartData(
+            sections: sections,
+            sectionsSpace: 10,
+            centerSpaceRadius: isSmallScreen ? 50 : 60,
+            pieTouchData: PieTouchData(enabled: true),
+            borderData: FlBorderData(show: false),
+            startDegreeOffset: 180,
+          ),
+        ),
+        // Menampilkan persentase data terbanyak di tengah chart
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${_getLargestPercentage(statistics)}%',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: isSmallScreen ? 22 : 26,
+                fontWeight: FontWeight.bold,
+                color: const Color.fromRGBO(31, 80, 154, 1),
+              ),
+            ),
+            Text(
+              _getLargestCategoryName(statistics),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: isSmallScreen ? 12 : 14,
+                fontWeight: FontWeight.normal,
+                color: Colors.black54,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // Fungsi untuk mendapatkan persentase terbesar
+  String _getLargestPercentage(Map<String, int> statistics) {
+    final Map<String, int> values = {
+      'present': (statistics['present'] ?? 0) + (statistics['late'] ?? 0),
+      'permission': statistics['permission'] ?? 0,
+      'sick': statistics['sick'] ?? 0,
+      'alpha': statistics['alpha'] ?? 0,
+    };
+
+    final total = values.values.fold<int>(0, (sum, value) => sum + value);
+    if (total == 0) return '0';
+
+    String largestCategory = 'present';
+    values.forEach((category, value) {
+      if (value > (values[largestCategory] ?? 0)) {
+        largestCategory = category;
+      }
+    });
+
+    return _calculatePercentage(values[largestCategory] ?? 0, statistics)
+        .toString();
+  }
+
+  // Fungsi untuk mendapatkan nama kategori dengan persentase terbesar
+  String _getLargestCategoryName(Map<String, int> statistics) {
+    final Map<String, int> values = {
+      'present': (statistics['present'] ?? 0) + (statistics['late'] ?? 0),
+      'permission': statistics['permission'] ?? 0,
+      'sick': statistics['sick'] ?? 0,
+      'alpha': statistics['alpha'] ?? 0,
+    };
+
+    final Map<String, String> categoryNames = {
+      'present': 'Hadir',
+      'permission': 'Izin',
+      'sick': 'Sakit',
+      'alpha': 'Alpha',
+    };
+
+    String largestCategory = 'present';
+    values.forEach((category, value) {
+      if (value > (values[largestCategory] ?? 0)) {
+        largestCategory = category;
+      }
+    });
+
+    return categoryNames[largestCategory] ?? '';
   }
 }

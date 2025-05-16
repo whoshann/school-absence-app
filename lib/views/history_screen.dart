@@ -30,8 +30,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   // Warna untuk setiap status
   final Map<String, Color> _statusColors = {
     'hadir': Color.fromRGBO(31, 80, 154, 1),
-    'sakit': Color.fromRGBO(229, 127, 5, 1),
-    'izin': Color.fromRGBO(10, 151, 176, 1),
+    'izin': Color.fromRGBO(229, 127, 5, 1),
+    'sakit': Color.fromRGBO(10, 151, 176, 1),
     'alpha': Color.fromRGBO(223, 5, 5, 1),
     'terlambat': Color.fromRGBO(102, 102, 102, 1)
   };
@@ -215,7 +215,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                             });
                                           },
                                           onPageChanged: _onPageChanged,
-                                          rowHeight: 45,
+                                          rowHeight: 60,
                                           availableGestures:
                                               AvailableGestures.horizontalSwipe,
                                           pageJumpingEnabled: false,
@@ -396,11 +396,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                               color:
                                                   Color.fromRGBO(70, 66, 85, 1),
                                               fontWeight: FontWeight.bold,
+                                              fontSize: 13,
                                             ),
                                             weekendStyle:
                                                 GoogleFonts.plusJakartaSans(
                                               color: Colors.red,
                                               fontWeight: FontWeight.bold,
+                                              fontSize: 13,
                                             ),
                                           ),
                                         ),
