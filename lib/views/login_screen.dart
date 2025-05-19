@@ -70,6 +70,26 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    // Cek apakah ada arguments (pesan error)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.arguments != null && Get.arguments is String) {
+        final message = Get.arguments as String;
+        Get.snackbar(
+          'Peringatan',
+          message,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+          duration: Duration(seconds: 5),
+          margin: EdgeInsets.all(10),
+        );
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Mendapatkan ukuran layar
     final Size screenSize = MediaQuery.of(context).size;

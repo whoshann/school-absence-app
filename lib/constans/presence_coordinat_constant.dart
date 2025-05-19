@@ -1,8 +1,16 @@
 import 'package:latlong2/latlong.dart';
 
 class PresenceConstants {
-  static const double RADIUS_IN_METERS = 500;
-  static const double VISUAL_RADIUS = 500.0;
+  // Radius dalam meter - jarak maksimum dari titik koordinat untuk dianggap "di dalam area sekolah"
+  // Tingkatkan nilai ini jika Anda ingin memperluas area
+  static const double RADIUS_IN_METERS =
+      25; // Ditingkatkan ke 25 meter untuk memberikan toleransi yang cukup
+
+  // Radius visual untuk tampilan di peta (dalam meter)
+  static const double VISUAL_RADIUS = 25.0; // Sesuaikan dengan RADIUS_IN_METERS
+
+  // Koordinat lokasi sekolah
+  // Format: LatLng(latitude, longitude)
   static const LatLng SMKN4_LOCATION =
-      LatLng(-7.9897178191328, 112.62728964012564);
+      LatLng(-7.995310018584165, 112.62007592131645);
 }

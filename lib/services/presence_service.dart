@@ -48,7 +48,15 @@ class PresenceService {
     XFile? photo,
   }) async {
     try {
+      // Validasi token terlebih dahulu
+      final tokenValid = await TokenHelper.validateToken();
+      if (!tokenValid) {
+        // Jika token tidak valid, validateToken sudah redirect ke login
+        return;
+      }
+
       final token = await TokenHelper.getToken();
+      // Token pasti ada karena sudah divalidasi di atas
 
       // Prepare form data
       final Map<String, dynamic> formMap = {
@@ -57,10 +65,10 @@ class PresenceService {
         'date': date.toIso8601String(),
       };
 
-      // Add location data if status is Present
-      if (status == 'Present') {
+      // Add location data if status is Present or Late
+      if (status == 'Present' || status == 'Late') {
         if (position == null) {
-          throw Exception('Lokasi diperlukan untuk status Hadir');
+          throw Exception('Lokasi diperlukan untuk status Hadir/Terlambat');
         }
         formMap['latitude'] = position.latitude;
         formMap['longitude'] = position.longitude;
@@ -81,8 +89,8 @@ class PresenceService {
         formData.fields.add(MapEntry(key, value.toString()));
       });
 
-      // Add photo if exists and status is not Present
-      if (photo != null && status != 'Present') {
+      // Add photo if exists and status is not Present/Late
+      if (photo != null && status != 'Present' && status != 'Late') {
         formData.files.add(
           MapEntry(
             'photo',
@@ -114,10 +122,10 @@ class PresenceService {
       logger.i('Response status: ${response.statusCode}');
       logger.i('Response data: ${response.data}');
 
-      if (response.statusCode == 403) {
-        final errorMessage = response.data['error_message'] ??
-            'Anda sudah melakukan absensi hari ini';
-        throw Exception(errorMessage);
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        // Token tidak valid, redirect ke login
+        await TokenHelper.validateToken();
+        return;
       }
 
       if (response.statusCode != 201 && response.statusCode != 200) {
@@ -125,16 +133,6 @@ class PresenceService {
       }
     } catch (e) {
       logger.e('Error submitting presence: $e');
-      if (e is DioException) {
-        if (e.response != null) {
-          logger.e('Server response: ${e.response?.data}');
-          final message = e.response?.data['error_message'] ??
-              e.response?.data['message'] ??
-              'Gagal mengirim absensi';
-          throw Exception(message);
-        }
-        throw Exception('Gagal terhubung ke server');
-      }
       rethrow;
     }
   }

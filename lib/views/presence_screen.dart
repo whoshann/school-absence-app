@@ -10,6 +10,7 @@ import 'package:student_absence/constans/presence_coordinat_constant.dart';
 import 'package:student_absence/services/presence_service.dart';
 import 'package:logger/logger.dart';
 import '../services/student_service.dart';
+import '../services/absence_service.dart';
 
 class PresenceScreen extends StatefulWidget {
   const PresenceScreen({super.key});
@@ -30,6 +31,11 @@ class _PresenceScreenState extends State<PresenceScreen> {
   bool _isLoadingLocation = true;
   bool isWithinSchoolArea = false;
   final StudentService _studentService = StudentService();
+  final AbsenceService _absenceService = AbsenceService();
+  bool _isLoading = true;
+  bool _hasError = false;
+  bool _hasAbsenceToday = false;
+  String _todayAbsenceStatus = '';
 
   @override
   void initState() {
@@ -40,9 +46,70 @@ class _PresenceScreenState extends State<PresenceScreen> {
     final now = DateTime.now();
     final String day = now.day.toString().padLeft(2, '0');
     final String month = now.month.toString().padLeft(2, '0');
-    final String year =
-        now.year.toString().substring(2, 4); // Ambil 2 digit terakhir
+    final String year = now.year.toString().substring(2, 4);
     _dateController.text = "$day/$month/$year";
+
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _hasError = false;
+      });
+
+      // Coba mendapatkan data siswa untuk validasi
+      final student = await _studentService.getCurrentStudent();
+
+      // Periksa apakah siswa sudah absen hari ini
+      await _checkTodayAbsence(student.id);
+
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (e) {
+      logger.e('Error loading initial data: $e');
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
+    }
+  }
+
+  Future<void> _checkTodayAbsence(int studentId) async {
+    try {
+      // Ambil tanggal hari ini
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+
+      // Ambil data absensi untuk bulan ini
+      final absences = await _absenceService.getMonthlyAbsences(
+        studentId,
+        now,
+      );
+
+      // Kunci untuk tanggal hari ini dalam format yang digunakan oleh absences
+      final String todayKey = "${today.year}-${today.month}-${today.day}";
+
+      // Cek apakah ada data absensi untuk hari ini
+      if (absences.containsKey(todayKey)) {
+        setState(() {
+          _hasAbsenceToday = true;
+          _todayAbsenceStatus = absences[todayKey]?['status'] ?? '';
+        });
+      } else {
+        setState(() {
+          _hasAbsenceToday = false;
+          _todayAbsenceStatus = '';
+        });
+      }
+    } catch (e) {
+      logger.e('Error checking today\'s absence: $e');
+      setState(() {
+        _hasAbsenceToday = false;
+      });
+    }
   }
 
   Future<void> _getCurrentLocation() async {
@@ -57,7 +124,11 @@ class _PresenceScreenState extends State<PresenceScreen> {
           _currentPosition = position;
           _isLoadingLocation = false;
         });
-        if (_presensi == 'Present') {
+        // Cek area sekolah untuk status Hadir dan Terlambat
+        if (_presensi == 'Present' ||
+            _presensi == 'Hadir' ||
+            _presensi == 'Late' ||
+            _presensi == 'Terlambat') {
           _checkIfWithinSchool();
         }
       }
@@ -73,6 +144,28 @@ class _PresenceScreenState extends State<PresenceScreen> {
 
   void _checkIfWithinSchool() {
     if (_currentPosition != null) {
+      // Hitung jarak antara posisi pengguna dan sekolah
+      final double distanceInMeters = Geolocator.distanceBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        PresenceConstants.SMKN4_LOCATION.latitude,
+        PresenceConstants.SMKN4_LOCATION.longitude,
+      );
+
+      // Log detail perhitungan untuk debugging
+      logger.d(
+          '=================== PRESENCE SCREEN LOCATION CHECK ===================');
+      logger.d('Jarak ke sekolah: $distanceInMeters meter');
+      logger.d(
+          'Radius yang diizinkan: ${PresenceConstants.RADIUS_IN_METERS} meter');
+      logger.d(
+          'Posisi Anda: [${_currentPosition!.latitude}, ${_currentPosition!.longitude}]');
+      logger.d(
+          'Posisi sekolah: [${PresenceConstants.SMKN4_LOCATION.latitude}, ${PresenceConstants.SMKN4_LOCATION.longitude}]');
+      logger.d(
+          'Berada di dalam area sekolah: ${distanceInMeters <= PresenceConstants.RADIUS_IN_METERS}');
+      logger.d('=============================================================');
+
       setState(() {
         isWithinSchoolArea = LocationService.isWithinSchoolArea(
           _currentPosition!,
@@ -133,8 +226,18 @@ class _PresenceScreenState extends State<PresenceScreen> {
     if (!mounted) return;
 
     try {
+      // Log awal submit presence
+      logger
+          .d('=================== SUBMIT PRESENCE STARTED ===================');
+      logger.d('Status: $_presensi');
+      logger.d(
+          'Current Position: ${_currentPosition?.latitude}, ${_currentPosition?.longitude}');
+      logger.d('Is Within School Area: $isWithinSchoolArea');
+      logger.d('=============================================================');
+
       // Validasi input dasar
       if (_presensi == null || _dateController.text.isEmpty) {
+        logger.d('Validasi gagal: presensi atau tanggal kosong');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Mohon lengkapi semua data'),
@@ -161,9 +264,12 @@ class _PresenceScreenState extends State<PresenceScreen> {
           break;
       }
 
-      // Validasi lokasi untuk status Present
-      if (backendStatus == 'Present') {
+      logger.d('Status setelah konversi: $backendStatus');
+
+      // Validasi lokasi untuk status Present DAN Late (terlambat)
+      if (backendStatus == 'Present' || backendStatus == 'Late') {
         if (_currentPosition == null) {
+          logger.d('Lokasi belum tersedia, mencoba mendapatkan lokasi...');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Mohon tunggu, sedang mendapatkan lokasi...'),
@@ -173,6 +279,7 @@ class _PresenceScreenState extends State<PresenceScreen> {
           await _getCurrentLocation(); // Mencoba mendapatkan lokasi lagi
 
           if (_currentPosition == null) {
+            logger.d('Gagal mendapatkan lokasi setelah mencoba ulang');
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
@@ -185,13 +292,10 @@ class _PresenceScreenState extends State<PresenceScreen> {
         }
 
         if (!isWithinSchoolArea) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                  'Anda harus berada di area sekolah untuk melakukan absensi hadir'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          logger.d('Lokasi tidak valid: berada di luar area sekolah');
+          // Tampilkan dialog error lokasi
+          _showLocationErrorDialog(
+              backendStatus == 'Present' ? 'hadir' : 'terlambat');
           return;
         }
       }
@@ -229,7 +333,9 @@ class _PresenceScreenState extends State<PresenceScreen> {
         studentId: student.id,
         status: backendStatus,
         date: now, // Menggunakan waktu saat ini
-        position: backendStatus == 'Present' ? _currentPosition : null,
+        position: (backendStatus == 'Present' || backendStatus == 'Late')
+            ? _currentPosition
+            : null,
         photo: _imageFile,
         note: _noteController.text.isNotEmpty ? _noteController.text : null,
       );
@@ -239,13 +345,8 @@ class _PresenceScreenState extends State<PresenceScreen> {
       // Tutup loading indicator
       Navigator.of(context).pop();
 
-      // Tampilkan pesan sukses
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Absensi berhasil dikirim'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      // Tampilkan dialog sukses yang responsif
+      _showSuccessDialog();
 
       // Reset form
       setState(() {
@@ -274,11 +375,251 @@ class _PresenceScreenState extends State<PresenceScreen> {
     }
   }
 
+  // Dialog notifikasi absensi berhasil
+  void _showSuccessDialog() {
+    final bool isSmallScreen = MediaQuery.of(context).size.width < 380;
+
+    showDialog(
+      context: context,
+      barrierDismissible:
+          false, // Dialog tidak dapat ditutup dengan klik di luar
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: EdgeInsets.all(24),
+            constraints: BoxConstraints(
+              maxWidth: 320,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon sukses
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle,
+                    color: Colors.green[700],
+                    size: isSmallScreen ? 50 : 60,
+                  ),
+                ),
+                SizedBox(height: 20),
+
+                // Teks sukses
+                Text(
+                  'Absensi Berhasil!',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: isSmallScreen ? 18 : 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 12),
+
+                Text(
+                  'Data absensi Anda berhasil disimpan ke sistem.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: isSmallScreen ? 14 : 16,
+                    color: Colors.black54,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 24),
+
+                // Tombol OK
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      // Refresh data setelah dialog ditutup
+                      _loadInitialData();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color.fromRGBO(31, 80, 154, 1),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        vertical: isSmallScreen ? 12 : 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Selesai',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w600,
+                        fontSize: isSmallScreen ? 14 : 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Dialog notifikasi error lokasi
+  void _showLocationErrorDialog(String absenceType) {
+    final bool isSmallScreen = MediaQuery.of(context).size.width < 380;
+
+    // Hitung jarak untuk informasi debugging
+    double distanceInMeters = 0;
+    if (_currentPosition != null) {
+      distanceInMeters = Geolocator.distanceBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        PresenceConstants.SMKN4_LOCATION.latitude,
+        PresenceConstants.SMKN4_LOCATION.longitude,
+      );
+    }
+
+    // Ambil nilai radius langsung dari konstanta (untuk memastikan nilai terbaru)
+    final double currentRadius = PresenceConstants.RADIUS_IN_METERS;
+
+    showDialog(
+      context: context,
+      barrierDismissible:
+          false, // Dialog tidak dapat ditutup dengan klik di luar
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: EdgeInsets.all(24),
+            constraints: BoxConstraints(
+              maxWidth: 320,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon error
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.location_off,
+                    color: Colors.red[700],
+                    size: isSmallScreen ? 50 : 60,
+                  ),
+                ),
+                SizedBox(height: 20),
+
+                // Teks error
+                Text(
+                  'Lokasi Tidak Valid',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: isSmallScreen ? 18 : 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 12),
+
+                Text(
+                  'Anda harus berada di area sekolah untuk melakukan absensi $absenceType.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: isSmallScreen ? 14 : 16,
+                    color: Colors.black54,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                SizedBox(height: 8),
+
+                // Info jarak (untuk debugging)
+                Text(
+                  'Jarak Anda dari sekolah: ${distanceInMeters.toStringAsFixed(1)} meter\nJarak maksimum: ${currentRadius.toStringAsFixed(1)} meter',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: isSmallScreen ? 12 : 13,
+                    color: Colors.black45,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                SizedBox(height: 8),
+
+                // Info tambahan koordinat untuk debugging
+                Text(
+                  'Koordinat Anda: [${_currentPosition?.latitude.toStringAsFixed(6) ?? 0}, ${_currentPosition?.longitude.toStringAsFixed(6) ?? 0}]\nKoordinat sekolah: [${PresenceConstants.SMKN4_LOCATION.latitude.toStringAsFixed(6)}, ${PresenceConstants.SMKN4_LOCATION.longitude.toStringAsFixed(6)}]',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: isSmallScreen ? 10 : 11,
+                    color: Colors.grey[400],
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                SizedBox(height: 20),
+
+                // Tombol OK
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red[700],
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        vertical: isSmallScreen ? 12 : 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Mengerti',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w600,
+                        fontSize: isSmallScreen ? 14 : 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Mendeteksi ukuran layar
     final bool isSmallScreen = MediaQuery.of(context).size.width < 380;
     final double contentPadding = isSmallScreen ? 20.0 : 24.0;
+
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color.fromRGBO(31, 80, 154, 1),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Color.fromRGBO(31, 80, 154, 1),
@@ -314,7 +655,7 @@ class _PresenceScreenState extends State<PresenceScreen> {
                       constraints: BoxConstraints(
                         minHeight: MediaQuery.of(context).size.height -
                             MediaQuery.of(context).padding.top -
-                            110, // Untuk memastikan card menutupi seluruh screen
+                            110,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -328,7 +669,10 @@ class _PresenceScreenState extends State<PresenceScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Card kuning dengan ikon dan teks (di dalam card putih)
+                            // Banner Error jika ada masalah loading data
+                            if (_hasError) _buildErrorBanner(isSmallScreen),
+
+                            // Card dengan ikon dan teks - warna hijau jika sudah absen, kuning jika belum
                             Center(
                               child: Card(
                                 margin: EdgeInsets.only(
@@ -338,7 +682,11 @@ class _PresenceScreenState extends State<PresenceScreen> {
                                   borderRadius: BorderRadius.circular(
                                       isSmallScreen ? 12 : 16),
                                 ),
-                                color: Color.fromRGBO(255, 249, 230, 1),
+                                color: _hasAbsenceToday
+                                    ? Color.fromRGBO(
+                                        232, 245, 233, 1) // Hijau light
+                                    : Color.fromRGBO(
+                                        255, 249, 230, 1), // Kuning light
                                 child: Padding(
                                   padding: EdgeInsets.all(
                                       isSmallScreen ? 16.0 : 20.0),
@@ -360,25 +708,35 @@ class _PresenceScreenState extends State<PresenceScreen> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              'Kamu belum absen hari ini',
+                                              _hasAbsenceToday
+                                                  ? 'Anda sudah absensi untuk hari ini'
+                                                  : 'Kamu belum absen hari ini',
                                               style:
                                                   GoogleFonts.plusJakartaSans(
                                                 fontSize:
                                                     isSmallScreen ? 16 : 18,
                                                 fontWeight: FontWeight.bold,
-                                                color: Color.fromRGBO(
-                                                    44, 44, 44, 1),
+                                                color: _hasAbsenceToday
+                                                    ? Color.fromRGBO(46, 125,
+                                                        50, 1) // Hijau text
+                                                    : Color.fromRGBO(44, 44, 44,
+                                                        1), // Grey text
                                               ),
                                             ),
                                             SizedBox(height: 4),
                                             Text(
-                                              'Yuk segera isi form di bawah ya!',
+                                              _hasAbsenceToday
+                                                  ? 'Status: ${_getStatusText(_todayAbsenceStatus)}'
+                                                  : 'Yuk segera isi form di bawah ya!',
                                               style:
                                                   GoogleFonts.plusJakartaSans(
                                                 fontSize:
                                                     isSmallScreen ? 11 : 13,
-                                                color: Color.fromRGBO(
-                                                    44, 44, 44, 1),
+                                                color: _hasAbsenceToday
+                                                    ? Color.fromRGBO(46, 125,
+                                                        50, 1) // Hijau text
+                                                    : Color.fromRGBO(44, 44, 44,
+                                                        1), // Grey text
                                               ),
                                             ),
                                           ],
@@ -442,20 +800,31 @@ class _PresenceScreenState extends State<PresenceScreen> {
                             ),
                             SizedBox(height: 20),
 
-                            // Widget lokasi
-                            LocationMapWidget(
-                              currentPosition: _currentPosition,
-                              isLoadingLocation: _isLoadingLocation,
-                              onRetryLocation: _getCurrentLocation,
-                              presensi: _presensi,
-                              isWithinSchoolArea: isWithinSchoolArea,
-                              smkn4Location: PresenceConstants.SMKN4_LOCATION,
-                              visualRadius: PresenceConstants.VISUAL_RADIUS,
-                              onLocationButtonPressed: () {
-                                _getCurrentLocation();
-                                if (_presensi == 'Present')
-                                  _checkIfWithinSchool();
-                              },
+                            // Widget lokasi - nonaktifkan jika ada error
+                            Opacity(
+                              opacity: _hasError ? 0.6 : 1.0,
+                              child: AbsorbPointer(
+                                absorbing: _hasError,
+                                child: LocationMapWidget(
+                                  currentPosition: _currentPosition,
+                                  isLoadingLocation: _isLoadingLocation,
+                                  onRetryLocation: _getCurrentLocation,
+                                  presensi: _presensi,
+                                  isWithinSchoolArea: isWithinSchoolArea,
+                                  smkn4Location:
+                                      PresenceConstants.SMKN4_LOCATION,
+                                  visualRadius: PresenceConstants.VISUAL_RADIUS,
+                                  onLocationButtonPressed: () {
+                                    _getCurrentLocation();
+                                    if (_presensi == 'Present' ||
+                                        _presensi == 'Hadir' ||
+                                        _presensi == 'Late' ||
+                                        _presensi == 'Terlambat') {
+                                      _checkIfWithinSchool();
+                                    }
+                                  },
+                                ),
+                              ),
                             ),
                             SizedBox(height: 20),
 
@@ -483,32 +852,42 @@ class _PresenceScreenState extends State<PresenceScreen> {
                             ),
                             SizedBox(height: 8),
 
-                            // Form presensi
-                            PresenceForm(
-                              presensi: _presensi,
-                              onPresensiChanged: (value) {
-                                setState(() {
-                                  _presensi = value;
-                                  if (value == 'Present') {
-                                    _imageFile = null;
-                                    _fileName = null;
-                                    _checkIfWithinSchool();
-                                  } else if (value == 'Late') {
-                                    _imageFile = null;
-                                    _fileName = null;
-                                  }
-                                });
-                              },
-                              imageFile: _imageFile,
-                              fileName: _fileName,
-                              onChooseFile: _chooseFile,
-                              dateController: _dateController,
-                              noteController: _noteController,
-                              onSubmit: _submitPresence,
-                              showNote: _presensi == 'Sick' ||
-                                  _presensi == 'Permission',
-                              enableImageUpload:
-                                  _presensi != 'Present' && _presensi != 'Late',
+                            // Form presensi - nonaktifkan jika ada error atau siswa sudah absen
+                            Opacity(
+                              opacity:
+                                  (_hasError || _hasAbsenceToday) ? 0.6 : 1.0,
+                              child: AbsorbPointer(
+                                absorbing: _hasError || _hasAbsenceToday,
+                                child: PresenceForm(
+                                  presensi: _presensi,
+                                  onPresensiChanged: (value) {
+                                    setState(() {
+                                      _presensi = value;
+                                      if (value == 'Present' ||
+                                          value == 'Hadir' ||
+                                          value == 'Late' ||
+                                          value == 'Terlambat') {
+                                        _imageFile = null;
+                                        _fileName = null;
+                                        // Selalu cek kembali lokasi ketika mengubah presensi menjadi Hadir atau Terlambat
+                                        _checkIfWithinSchool();
+                                      }
+                                    });
+                                  },
+                                  imageFile: _imageFile,
+                                  fileName: _fileName,
+                                  onChooseFile: _chooseFile,
+                                  dateController: _dateController,
+                                  noteController: _noteController,
+                                  onSubmit: _submitPresence,
+                                  showNote: _presensi == 'Sick' ||
+                                      _presensi == 'Permission',
+                                  enableImageUpload: _presensi != 'Present' &&
+                                      _presensi != 'Hadir' &&
+                                      _presensi != 'Late' &&
+                                      _presensi != 'Terlambat',
+                                ),
+                              ),
                             ),
 
                             // Tambahkan padding di bawah untuk memberikan ruang saat scroll
@@ -531,5 +910,83 @@ class _PresenceScreenState extends State<PresenceScreen> {
         ],
       ),
     );
+  }
+
+  // Widget untuk menampilkan banner error
+  Widget _buildErrorBanner(bool isSmallScreen) {
+    return Container(
+      margin: EdgeInsets.only(bottom: isSmallScreen ? 16 : 20),
+      padding: EdgeInsets.all(16),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Color.fromRGBO(255, 235, 238, 1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.red[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.red),
+              SizedBox(width: 8),
+              Text(
+                'Terjadi kesalahan',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: isSmallScreen ? 16 : 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red[700],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Tidak dapat memuat data. Form absensi tidak dapat digunakan.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: isSmallScreen ? 13 : 14,
+              color: Colors.red[700],
+            ),
+          ),
+          SizedBox(height: 12),
+          Center(
+            child: ElevatedButton(
+              onPressed: _loadInitialData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[700],
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'Muat Ulang',
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Fungsi untuk mendapatkan teks status yang lebih baik dari kode status
+  String _getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'present':
+        return 'Hadir';
+      case 'permission':
+        return 'Izin';
+      case 'sick':
+        return 'Sakit';
+      case 'alpha':
+        return 'Alpha';
+      case 'late':
+        return 'Terlambat';
+      default:
+        return status;
+    }
   }
 }

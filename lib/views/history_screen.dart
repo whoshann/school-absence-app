@@ -179,6 +179,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // Banner error dan tombol refresh jika data gagal dimuat tapi tampilan utama tetap muncul
+                                  if (_presenceData.isEmpty && !isLoading)
+                                    _buildErrorBanner(isSmallScreen),
+
                                   // Calendar
                                   Container(
                                     decoration: BoxDecoration(
@@ -609,6 +613,67 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ],
                   ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Widget untuk menampilkan banner error
+  Widget _buildErrorBanner(bool isSmallScreen) {
+    return Container(
+      margin: EdgeInsets.only(bottom: isSmallScreen ? 16 : 20),
+      padding: EdgeInsets.all(16),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Color.fromRGBO(255, 235, 238, 1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.red[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.red),
+              SizedBox(width: 8),
+              Text(
+                'Terjadi kesalahan',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: isSmallScreen ? 16 : 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red[700],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Tidak dapat memuat data riwayat absensi.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: isSmallScreen ? 13 : 14,
+              color: Colors.red[700],
+            ),
+          ),
+          SizedBox(height: 12),
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: _loadData,
+              label: Text(
+                'Muat Ulang',
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[700],
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
             ),
           ),
         ],
