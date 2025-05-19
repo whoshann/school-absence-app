@@ -56,7 +56,6 @@ class PresenceService {
       }
 
       final token = await TokenHelper.getToken();
-      // Token pasti ada karena sudah divalidasi di atas
 
       // Prepare form data
       final Map<String, dynamic> formMap = {
@@ -79,9 +78,6 @@ class PresenceService {
         formMap['note'] = note;
       }
 
-      // Log request data untuk debugging
-      logger.i('Preparing to send data: $formMap');
-
       FormData formData = FormData();
 
       // Add all form fields
@@ -102,12 +98,6 @@ class PresenceService {
         );
       }
 
-      logger.i('Sending request to: $baseUrl/absence');
-      logger.i('Form data fields: ${formData.fields}');
-      if (formData.files.isNotEmpty) {
-        logger.i('Form data files: ${formData.files}');
-      }
-
       final response = await _dio.post(
         '$baseUrl/absence',
         data: formData,
@@ -118,9 +108,6 @@ class PresenceService {
           validateStatus: (status) => true,
         ),
       );
-
-      logger.i('Response status: ${response.statusCode}');
-      logger.i('Response data: ${response.data}');
 
       if (response.statusCode == 401 || response.statusCode == 403) {
         // Token tidak valid, redirect ke login

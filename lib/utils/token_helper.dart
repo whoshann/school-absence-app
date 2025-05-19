@@ -20,12 +20,10 @@ class TokenHelper {
   // Validasi token dan redirect ke login jika tidak valid
   static Future<bool> validateToken() async {
     try {
-      logger.d('Validating token...');
       final token = await getToken();
 
       // Jika token null, redirect ke login
       if (token == null) {
-        logger.d('Token is null, redirecting to login');
         await _redirectToLogin(
             'Sesi Anda telah berakhir. Silakan login kembali.');
         return false;
@@ -36,18 +34,11 @@ class TokenHelper {
 
       // Jika token expired, redirect ke login
       if (isExpired) {
-        logger.d('Token is expired, redirecting to login');
         await _redirectToLogin(
             'Sesi Anda telah berakhir. Silakan login kembali.');
         return false;
       }
 
-      // Cek berapa lama waktu token akan expired
-      final expirationDate = JwtDecoder.getExpirationDate(token);
-      final now = DateTime.now();
-      final timeToExpiry = expirationDate.difference(now);
-
-      logger.d('Token will expire in ${timeToExpiry.inMinutes} minutes');
       return true;
     } catch (e) {
       logger.e('Error validating token: $e');

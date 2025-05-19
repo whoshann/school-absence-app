@@ -22,51 +22,98 @@ class _LoginScreenState extends State<LoginScreen> {
     await prefs.setString('access_token', token);
   }
 
+  Future<void> _clearToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('access_token');
+  }
+
   Future<void> _handleLogin() async {
+    // Validasi input terlebih dahulu
+    if (_usernameController.text.isEmpty) {
+      _showErrorMessage('NIS tidak boleh kosong', 'Silakan masukkan NIS Anda');
+      return;
+    }
+
+    if (_passwordController.text.isEmpty) {
+      _showErrorMessage(
+          'Password tidak boleh kosong', 'Silakan masukkan password Anda');
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
-      print('Mencoba login dengan username: ${_usernameController.text}');
+      // Hapus token yang mungkin tersimpan sebelumnya
+      await _clearToken();
 
       final response = await _authService.login(
         _usernameController.text,
         _passwordController.text,
       );
 
-      print('Response login: ${response.toString()}');
-
-      if (response.success) {
-        print('Login berhasil! Token: ${response.data.accessToken}');
-
+      if (response.success == true &&
+          response.data != null &&
+          response.data!.accessToken.isNotEmpty) {
         // Simpan token
-        await _saveToken(response.data.accessToken);
-
-        // Verifikasi token tersimpan
-        final prefs = await SharedPreferences.getInstance();
-        final savedToken = prefs.getString('access_token');
-        print('Token tersimpan: $savedToken');
-
+        await _saveToken(response.data!.accessToken);
         Get.offAll(() => HomeScreen());
       } else {
-        print('Login gagal: ${response.code}');
-        Get.snackbar(
-          'Error',
-          'Login gagal',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        // Pesan yang lebih spesifik berdasarkan kode respons
+        if (response.code == 'USERNAME_NOT_FOUND') {
+          _showErrorMessage('NIS Tidak Ditemukan',
+              'NIS yang Anda masukkan tidak terdaftar dalam sistem');
+        } else if (response.code == 'INVALID_PASSWORD') {
+          _showErrorMessage(
+              'Password Salah', 'Password yang Anda masukkan salah');
+        } else {
+          _showErrorMessage(
+              'Login Gagal', 'NIS atau password yang Anda masukkan salah');
+        }
       }
     } catch (e) {
-      print('Error during login: $e');
-      Get.snackbar(
-        'Error',
-        e.toString(),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      String errorMessage = e.toString();
+
+      if (errorMessage.contains('NIS') ||
+          errorMessage.contains('username') ||
+          errorMessage.contains('tidak ditemukan')) {
+        _showErrorMessage('NIS Tidak Ditemukan',
+            'NIS yang Anda masukkan tidak terdaftar dalam sistem');
+      } else if (errorMessage.contains('password') ||
+          errorMessage.contains('sandi')) {
+        _showErrorMessage(
+            'Password Salah', 'Password yang Anda masukkan salah');
+      } else if (errorMessage.contains('connection') ||
+          errorMessage.toLowerCase().contains('network') ||
+          errorMessage.toLowerCase().contains('socket')) {
+        _showErrorMessage('Koneksi Gagal',
+            'Tidak dapat terhubung ke server. Periksa koneksi internet Anda dan coba lagi');
+      } else {
+        _showErrorMessage(
+            'Terjadi Kesalahan', errorMessage.replaceAll('Exception: ', ''));
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
+  }
+
+  void _showErrorMessage(String title, String message) {
+    Get.snackbar(
+      title,
+      message,
+      backgroundColor: Colors.red[700],
+      colorText: Colors.white,
+      margin: EdgeInsets.all(10),
+      borderRadius: 10,
+      duration: Duration(seconds: 4),
+      snackPosition: SnackPosition.BOTTOM,
+      icon: Icon(
+        Icons.error_outline,
+        color: Colors.white,
+        size: 28,
+      ),
+    );
   }
 
   @override
@@ -87,6 +134,9 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     });
+
+    // Hapus token lama saat halaman login dibuka
+    _clearToken();
   }
 
   @override

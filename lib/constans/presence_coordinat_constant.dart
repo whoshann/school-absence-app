@@ -12,5 +12,5 @@ class PresenceConstants {
   // Koordinat lokasi sekolah
   // Format: LatLng(latitude, longitude)
   static const LatLng SMKN4_LOCATION =
-      LatLng(-7.995310018584165, 112.62007592131645);
+      LatLng(-7.9896111735200845, 112.62731069520423);
 }

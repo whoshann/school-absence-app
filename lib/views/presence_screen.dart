@@ -152,20 +152,6 @@ class _PresenceScreenState extends State<PresenceScreen> {
         PresenceConstants.SMKN4_LOCATION.longitude,
       );
 
-      // Log detail perhitungan untuk debugging
-      logger.d(
-          '=================== PRESENCE SCREEN LOCATION CHECK ===================');
-      logger.d('Jarak ke sekolah: $distanceInMeters meter');
-      logger.d(
-          'Radius yang diizinkan: ${PresenceConstants.RADIUS_IN_METERS} meter');
-      logger.d(
-          'Posisi Anda: [${_currentPosition!.latitude}, ${_currentPosition!.longitude}]');
-      logger.d(
-          'Posisi sekolah: [${PresenceConstants.SMKN4_LOCATION.latitude}, ${PresenceConstants.SMKN4_LOCATION.longitude}]');
-      logger.d(
-          'Berada di dalam area sekolah: ${distanceInMeters <= PresenceConstants.RADIUS_IN_METERS}');
-      logger.d('=============================================================');
-
       setState(() {
         isWithinSchoolArea = LocationService.isWithinSchoolArea(
           _currentPosition!,
@@ -226,18 +212,8 @@ class _PresenceScreenState extends State<PresenceScreen> {
     if (!mounted) return;
 
     try {
-      // Log awal submit presence
-      logger
-          .d('=================== SUBMIT PRESENCE STARTED ===================');
-      logger.d('Status: $_presensi');
-      logger.d(
-          'Current Position: ${_currentPosition?.latitude}, ${_currentPosition?.longitude}');
-      logger.d('Is Within School Area: $isWithinSchoolArea');
-      logger.d('=============================================================');
-
       // Validasi input dasar
       if (_presensi == null || _dateController.text.isEmpty) {
-        logger.d('Validasi gagal: presensi atau tanggal kosong');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Mohon lengkapi semua data'),
@@ -264,12 +240,9 @@ class _PresenceScreenState extends State<PresenceScreen> {
           break;
       }
 
-      logger.d('Status setelah konversi: $backendStatus');
-
       // Validasi lokasi untuk status Present DAN Late (terlambat)
       if (backendStatus == 'Present' || backendStatus == 'Late') {
         if (_currentPosition == null) {
-          logger.d('Lokasi belum tersedia, mencoba mendapatkan lokasi...');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Mohon tunggu, sedang mendapatkan lokasi...'),
@@ -279,7 +252,6 @@ class _PresenceScreenState extends State<PresenceScreen> {
           await _getCurrentLocation(); // Mencoba mendapatkan lokasi lagi
 
           if (_currentPosition == null) {
-            logger.d('Gagal mendapatkan lokasi setelah mencoba ulang');
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
@@ -292,7 +264,6 @@ class _PresenceScreenState extends State<PresenceScreen> {
         }
 
         if (!isWithinSchoolArea) {
-          logger.d('Lokasi tidak valid: berada di luar area sekolah');
           // Tampilkan dialog error lokasi
           _showLocationErrorDialog(
               backendStatus == 'Present' ? 'hadir' : 'terlambat');
@@ -555,19 +526,6 @@ class _PresenceScreenState extends State<PresenceScreen> {
                 ),
 
                 SizedBox(height: 8),
-
-                // Info tambahan koordinat untuk debugging
-                Text(
-                  'Koordinat Anda: [${_currentPosition?.latitude.toStringAsFixed(6) ?? 0}, ${_currentPosition?.longitude.toStringAsFixed(6) ?? 0}]\nKoordinat sekolah: [${PresenceConstants.SMKN4_LOCATION.latitude.toStringAsFixed(6)}, ${PresenceConstants.SMKN4_LOCATION.longitude.toStringAsFixed(6)}]',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: isSmallScreen ? 10 : 11,
-                    color: Colors.grey[400],
-                    fontStyle: FontStyle.italic,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-
-                SizedBox(height: 20),
 
                 // Tombol OK
                 SizedBox(
