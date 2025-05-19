@@ -19,12 +19,15 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: const Color.fromRGBO(31, 80, 154, 1),
       body: Center(
         child: Image.asset(
           'assets/images/splash-screen-logo.png',
-          width: 150,
+          width: screenSize.width * 0.3,
+          height: screenSize.height * 0.2,
         ),
       ),
     );

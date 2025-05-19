@@ -31,7 +31,12 @@ class LocationMapWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (presensi == 'Hadir' && !isLoadingLocation && currentPosition != null)
+        if ((presensi == 'Hadir' ||
+                presensi == 'Present' ||
+                presensi == 'Terlambat' ||
+                presensi == 'Late') &&
+            !isLoadingLocation &&
+            currentPosition != null)
           Container(
             margin: EdgeInsets.only(bottom: 16),
             padding: EdgeInsets.all(8),
@@ -120,7 +125,10 @@ class LocationMapWidget extends StatelessWidget {
               markers: [
                 Marker(
                   point: smkn4Location,
-                  child: presensi == 'Hadir'
+                  child: (presensi == 'Hadir' ||
+                          presensi == 'Present' ||
+                          presensi == 'Terlambat' ||
+                          presensi == 'Late')
                       ? Stack(
                           alignment: Alignment.center,
                           children: [

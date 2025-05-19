@@ -145,6 +145,20 @@ class _HomeScreenState extends State<HomeScreen> {
     // Tentukan apakah layar kecil
     final bool isSmallScreen = screenSize.width < 380;
 
+    // Data placeholder untuk kasus error
+    final Map<String, dynamic> placeholderData = {
+      'student': null, // Ini akan menampilkan '-' untuk nama dan kelas
+      'statistics': {
+        'present': 0,
+        'late': 0,
+        'permission': 0,
+        'sick': 0,
+        'alpha': 0,
+      },
+    };
+
+    bool hasError = !_isLoading && _cachedData == null;
+
     if (_isLoading && _cachedData == null) {
       return Container(
           color: Colors.white,
@@ -153,32 +167,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color.fromRGBO(31, 80, 154, 1))));
     }
 
-    // Jika ada error tapi tidak ada data yang di-cache
-    if (!_isLoading && _cachedData == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Gagal memuat data',
-              style: TextStyle(color: Colors.white),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadData,
-              child: Text('Coba lagi'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromRGBO(31, 80, 154, 1),
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Gunakan data cache saat loading, atau data baru saat sudah selesai
-    final data = _cachedData!;
+    // Gunakan data cache saat loading, data baru saat sudah selesai,
+    // atau data placeholder saat terjadi error
+    final data = hasError ? placeholderData : _cachedData!;
     final statistics = data['statistics'] as Map<String, int>;
 
     return SafeArea(
@@ -202,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          data['student']?.name ?? 'Loading...',
+                          hasError ? "-" : (data['student']?.name ?? '-'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: isSmallScreen ? 22 : 28,
                             fontWeight: FontWeight.bold,
@@ -211,7 +202,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         SizedBox(height: isSmallScreen ? 4.0 : 6.0),
                         Text(
-                          data['student']?.classInfo.name ?? 'Loading...',
+                          hasError
+                              ? "-"
+                              : (data['student']?.classInfo.name ?? '-'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: isSmallScreen ? 16 : 20,
                             fontWeight: FontWeight.w500,
@@ -315,13 +308,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
 
-                          // Tempat untuk chart
+                          // Tempat untuk chart atau pesan error
                           Center(
                             child: SizedBox(
                               height: isSmallScreen ? 220 : 240,
                               width: isSmallScreen ? 220 : 240,
-                              child: _buildRoundedPieChart(
-                                  statistics, isSmallScreen),
+                              child: hasError
+                                  ? _buildErrorWidget(isSmallScreen)
+                                  : _buildRoundedPieChart(
+                                      statistics, isSmallScreen),
                             ),
                           ),
                           SizedBox(height: isSmallScreen ? 45 : 55),
@@ -713,5 +708,44 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     return categoryNames[largestCategory] ?? '';
+  }
+
+  // Widget untuk menampilkan pesan error dan tombol retry
+  Widget _buildErrorWidget(bool isSmallScreen) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Terjadi kesalahan saat memuat data',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: isSmallScreen ? 16 : 18,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+        SizedBox(height: isSmallScreen ? 16 : 20),
+        ElevatedButton(
+          onPressed: _loadData,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Color.fromRGBO(31, 80, 154, 1),
+            foregroundColor: Colors.white,
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 20 : 24,
+              vertical: isSmallScreen ? 10 : 12,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: Text(
+            'Muat Ulang',
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

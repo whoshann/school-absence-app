@@ -17,6 +17,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final StudentService _studentService = StudentService();
   Student? student;
   bool isLoading = true;
+  bool hasError = false;
 
   @override
   void initState() {
@@ -26,6 +27,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadStudentData() async {
     try {
+      setState(() {
+        isLoading = true;
+        hasError = false;
+      });
+
       final token = await TokenHelper.getToken();
       final decodedToken = JwtDecoder.decode(token!);
       final studentId = decodedToken['sub'];
@@ -42,13 +48,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print('Error loading student data: $e');
       setState(() {
         isLoading = false;
+        hasError = true;
       });
-      Get.snackbar(
-        'Error',
-        'Gagal memuat data siswa',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
     }
   }
 
@@ -110,6 +111,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
+                                  // Banner error jika data gagal dimuat
+                                  if (hasError)
+                                    _buildErrorBanner(isSmallScreen),
+
                                   SizedBox(height: isSmallScreen ? 80 : 90),
 
                                   // Avatar/Profile Picture
@@ -127,7 +132,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                   // Nama Siswa
                                   Text(
-                                    student?.name ?? 'Loading...',
+                                    hasError ? '-' : (student?.name ?? '-'),
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: isSmallScreen ? 20 : 24,
                                       fontWeight: FontWeight.bold,
@@ -140,7 +145,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                   // Info Kelas
                                   Text(
-                                    'Kelas: ${student?.classInfo.name ?? 'Loading...'}',
+                                    hasError
+                                        ? 'Kelas: -'
+                                        : 'Kelas: ${student?.classInfo.name ?? '-'}',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: isSmallScreen ? 14 : 16,
                                       color: Colors.black54,
@@ -152,7 +159,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                   // NIS
                                   Text(
-                                    'NIS: ${student?.nis ?? 'Loading...'}',
+                                    hasError
+                                        ? 'NIS: -'
+                                        : 'NIS: ${student?.nis ?? '-'}',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: isSmallScreen ? 14 : 16,
                                       color: Colors.black54,
@@ -164,7 +173,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                   // NISN
                                   Text(
-                                    'NISN: ${student?.nisn ?? 'Loading...'}',
+                                    hasError
+                                        ? 'NISN: -'
+                                        : 'NISN: ${student?.nisn ?? '-'}',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: isSmallScreen ? 14 : 16,
                                       color: Colors.black54,
@@ -229,6 +240,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
+    );
+  }
+
+  // Widget untuk menampilkan banner error
+  Widget _buildErrorBanner(bool isSmallScreen) {
+    return Container(
+      margin: EdgeInsets.only(bottom: isSmallScreen ? 16 : 20, top: 10),
+      padding: EdgeInsets.all(16),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Color.fromRGBO(255, 235, 238, 1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.red[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.red),
+              SizedBox(width: 8),
+              Text(
+                'Terjadi kesalahan',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: isSmallScreen ? 16 : 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red[700],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Tidak dapat memuat data profil.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: isSmallScreen ? 13 : 14,
+              color: Colors.red[700],
+            ),
+          ),
+          SizedBox(height: 12),
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: _loadStudentData,
+              label: Text(
+                'Muat Ulang',
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[700],
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

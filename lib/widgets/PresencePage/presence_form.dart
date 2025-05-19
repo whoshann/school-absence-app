@@ -30,26 +30,10 @@ class PresenceForm extends StatelessWidget {
   }) : super(key: key);
 
   List<DropdownMenuItem<String>> _buildStatusItems() {
-    // Uncomment time validation
-    final now = DateTime.now();
-    final cutoffTime = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      07,
-      15,
-    ); // 07:15
-
-    if (now.isAfter(cutoffTime)) {
-      return [
-        DropdownMenuItem(value: 'Late', child: Text('Terlambat')),
-        DropdownMenuItem(value: 'Permission', child: Text('Izin')),
-        DropdownMenuItem(value: 'Sick', child: Text('Sakit')),
-      ];
-    }
-
+    // Menampilkan semua opsi tanpa validasi waktu
     return [
       DropdownMenuItem(value: 'Present', child: Text('Hadir')),
+      DropdownMenuItem(value: 'Late', child: Text('Terlambat')),
       DropdownMenuItem(value: 'Permission', child: Text('Izin')),
       DropdownMenuItem(value: 'Sick', child: Text('Sakit')),
     ];
