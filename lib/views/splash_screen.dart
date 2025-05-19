@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart'; // Pastikan untuk import GetX
-import 'package:google_fonts/google_fonts.dart';
-import 'package:student_absence/views/onboarding_screen.dart'; // Import OnboardingScreen
+import 'package:get/get.dart';
+import 'package:student_absence/views/onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -14,22 +13,18 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     // Menggunakan GetX untuk navigasi setelah 3 detik
     Future.delayed(Duration(seconds: 3), () {
-      Get.off(() => OnboardingScreen()); // Navigasi menggunakan GetX
+      Get.off(() => OnboardingScreen());
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(31, 80, 154, 1), // Latar belakang biru
+      backgroundColor: const Color.fromRGBO(31, 80, 154, 1),
       body: Center(
-        child: Text(
-          'Logo', 
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 30, 
-            color: Colors.white, 
-            fontWeight: FontWeight.bold,
-          ),
+        child: Image.asset(
+          'assets/images/splash-screen-logo.png',
+          width: 150,
         ),
       ),
     );

@@ -55,7 +55,7 @@ class AbsenceService {
   }
 
   // Fungsi untuk mendapatkan detail absensi per bulan (untuk calendar)
-  Future<Map<String, String>> getMonthlyAbsences(
+  Future<Map<String, Map<String, dynamic>>> getMonthlyAbsences(
     int studentId,
     DateTime month,
   ) async {
@@ -77,7 +77,7 @@ class AbsenceService {
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List;
-        Map<String, String> absences = {};
+        Map<String, Map<String, dynamic>> absences = {};
 
         for (var item in data) {
           final date = DateTime.parse(item['date']);
@@ -104,7 +104,38 @@ class AbsenceService {
               status = 'hadir';
           }
 
-          absences[dateKey] = status;
+          // Ambil waktu dari field date dan konversi ke GMT+7 (WIB)
+          final dateInWIB = date.add(Duration(hours: 7));
+
+          // Jika waktu adalah 00:00, gunakan waktu default berdasarkan status
+          String timeString;
+          if (dateInWIB.hour == 0 && dateInWIB.minute == 0) {
+            switch (status) {
+              case 'hadir':
+                timeString = '07:15'; // Waktu hadir standar
+                break;
+              case 'terlambat':
+                timeString = '08:30'; // Waktu terlambat
+                break;
+              case 'sakit':
+              case 'izin':
+                timeString = '06:45'; // Waktu izin/sakit (biasanya pagi)
+                break;
+              case 'alpha':
+                timeString = '-'; // Tidak ada waktu untuk alpha
+                break;
+              default:
+                timeString = '07:00';
+            }
+          } else {
+            timeString =
+                '${dateInWIB.hour.toString().padLeft(2, '0')}:${dateInWIB.minute.toString().padLeft(2, '0')}';
+          }
+
+          absences[dateKey] = {
+            'status': status,
+            'time': timeString,
+          };
         }
 
         return absences;
