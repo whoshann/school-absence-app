@@ -10,11 +10,8 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401 || err.response?.statusCode == 403) {
-      _logger.e('Token error: ${err.response?.statusCode}');
-
       // Jangan redirect jika sudah di halaman login
       if (!Get.currentRoute.contains('login')) {
-        _logger.i('Redirecting to login due to auth error');
         await TokenHelper.removeToken();
         Get.offAll(() => LoginScreen(),
             arguments: 'Sesi Anda telah berakhir. Silakan login kembali.');
